@@ -90,15 +90,15 @@ class Trade_Your_CarController extends Controller
         $car->status="Pending";
         $car->publish_status=$req->input('publish_status');
         $car->expiry_at=date("Y-m-d H:i:s", strtotime('+24 hours'));
-        
 
-       
-        
+
+
+
         //return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-        
 
-        
+
+
 
         if($req->input('id')){
 
@@ -111,19 +111,19 @@ class Trade_Your_CarController extends Controller
   $gift = trade_your_car::find($id);
   $gift->fill($data);
   $gift->save();
-          
+
   $upMileage = trade_your_car::where('id', $id)->update(array('mileage' => $req->input('mileage')));
   $sell_id = $id;
-  
+
 
         }else{
             $car->save();
             $sell_id = $car->id;
 
-            
+
         }
 
-        
+
 
 
         $allowedfileExtension=['jpg','png','JPG','PNG','jpeg','JPEG'];
@@ -132,20 +132,20 @@ class Trade_Your_CarController extends Controller
 
             if($req->input('id')){
                 $id = $req->input('id');
-                trade_car_images::where('sell_car_id',$id)->where('is_primary','2')->delete(); 
+                trade_car_images::where('sell_car_id',$id)->where('is_primary','2')->delete();
             }
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('front_Seats'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('front_Seats');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->front_Seats as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -160,11 +160,11 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
         /// ending front_Seats Image Upload
 
@@ -177,20 +177,20 @@ class Trade_Your_CarController extends Controller
 
             if($req->input('id')){
                 $id = $req->input('id');
-                trade_car_images::where('sell_car_id',$id)->where('is_primary','3')->delete(); 
+                trade_car_images::where('sell_car_id',$id)->where('is_primary','3')->delete();
             }
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('dash'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('dash');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->dash as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -205,33 +205,33 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending dash Image Upload         
+        /// ending dash Image Upload
 
 
         /// starting navigation Image Upload
         if($req->hasFile('navigation')) {
             if($req->input('id')){
                 $id = $req->input('id');
-                trade_car_images::where('sell_car_id',$id)->where('is_primary','4')->delete(); 
+                trade_car_images::where('sell_car_id',$id)->where('is_primary','4')->delete();
             }
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('navigation'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('navigation');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->navigation as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -246,33 +246,33 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending dash Image Upload     
+        /// ending dash Image Upload
 
 
          /// starting front Image Upload
          if($req->hasFile('front')) {
             if($req->input('id')){
                 $id = $req->input('id');
-                trade_car_images::where('sell_car_id',$id)->where('is_primary','5')->delete(); 
+                trade_car_images::where('sell_car_id',$id)->where('is_primary','5')->delete();
             }
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('front'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('front');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->front as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -287,33 +287,33 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending front Image Upload    
+        /// ending front Image Upload
 
 
           /// starting rear Image Upload
           if($req->hasFile('rear')) {
             if($req->input('id')){
                 $id = $req->input('id');
-                trade_car_images::where('sell_car_id',$id)->where('is_primary','6')->delete(); 
+                trade_car_images::where('sell_car_id',$id)->where('is_primary','6')->delete();
             }
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('rear'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('rear');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->rear as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -328,13 +328,13 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending rear Image Upload   
+        /// ending rear Image Upload
 
 
 
@@ -344,20 +344,20 @@ class Trade_Your_CarController extends Controller
           if($req->hasFile('driver_s_side')) {
             if($req->input('id')){
                 $id = $req->input('id');
-                trade_car_images::where('sell_car_id',$id)->where('is_primary','7')->delete(); 
+                trade_car_images::where('sell_car_id',$id)->where('is_primary','7')->delete();
             }
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('driver_s_side'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('driver_s_side');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->driver_s_side as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -372,13 +372,13 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending driver_s_side Image Upload           
+        /// ending driver_s_side Image Upload
 
 
 
@@ -386,20 +386,20 @@ class Trade_Your_CarController extends Controller
         if($req->hasFile('passenger_s_side')) {
             if($req->input('id')){
                 $id = $req->input('id');
-                trade_car_images::where('sell_car_id',$id)->where('is_primary','8')->delete(); 
+                trade_car_images::where('sell_car_id',$id)->where('is_primary','8')->delete();
             }
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('passenger_s_side'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('passenger_s_side');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->passenger_s_side as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -414,19 +414,19 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
 
-                        
-        
+
+
                  }
-        /// ending passenger_s_side Image Upload         
+        /// ending passenger_s_side Image Upload
 
-        
 
-        
+
+
 
 
 
@@ -437,20 +437,20 @@ class Trade_Your_CarController extends Controller
         if($req->hasFile('additional_photos')) {
             if($req->input('id')){
                 $id = $req->input('id');
-                trade_car_images::where('sell_car_id',$id)->where('is_primary','0')->delete(); 
+                trade_car_images::where('sell_car_id',$id)->where('is_primary','0')->delete();
             }
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('additional_photos'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('additional_photos');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->additional_photos as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -464,11 +464,11 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
         /// ending Image Upload
 
@@ -488,26 +488,23 @@ class Trade_Your_CarController extends Controller
     public function list()
     {
 
-        
-        
+
+
         return trade_your_car::with('get_images')->where('type', 'trade')->orderBy('id', 'DESC')->get();
     }
 
     public function listSell()
     {
-
-        
-        
         return trade_your_car::with('get_images')->where('type', 'sell')->orderBy('id', 'DESC')->get();
     }
 
     public function GetAll()
     {
-        
+
         return trade_your_car::with('get_images')->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay())->get();
     }
 
-    
+
     public function section($section = null, $filter = null)
     {
 
@@ -519,21 +516,21 @@ class Trade_Your_CarController extends Controller
             $bid_status = 7;
         }
 
-        
+
         if($filter == ''){
         return auction_bids::with('get_images')->where('auction_bids.approved_status', '=', $bid_status)->join('trade_your_car', 'trade_your_car.id', '=', 'auction_bids.auction_item_id')->get();
         }else{
-            return auction_bids::with('get_images')->where('auction_bids.approved_status', '=', $bid_status)->where('type', '=', $filter)->join('trade_your_car', 'trade_your_car.id', '=', 'auction_bids.auction_item_id')->get(); 
+            return auction_bids::with('get_images')->where('auction_bids.approved_status', '=', $bid_status)->where('type', '=', $filter)->join('trade_your_car', 'trade_your_car.id', '=', 'auction_bids.auction_item_id')->get();
         }
     }
-   
+
     public function listAll(Request $req)
     {
         $make = $req->input('make');
-        $model = $req->input('model'); 
-		
-      
-      
+        $model = $req->input('model');
+
+
+
       function ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
     $output = NULL;
     if (filter_var($ip, FILTER_VALIDATE_IP) === FALSE) {
@@ -599,31 +596,31 @@ class Trade_Your_CarController extends Controller
     return $output;
 }
 
-       $location = $req->input('location'); 
-       $user_city = ip_info("Visitor", "City"); 
-      
+       $location = $req->input('location');
+       $user_city = ip_info("Visitor", "City");
+
         if($req->input('make') && $req->input('model')){
         $filter_query = trade_your_car::with('get_images')->where('make', $make)->where('model', $model)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
         }elseif($req->input('model')){
-        $filter_query = trade_your_car::with('get_images')->where('model', $model)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get(); 
+        $filter_query = trade_your_car::with('get_images')->where('model', $model)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
         }elseif($req->input('make')){
-        $filter_query = trade_your_car::with('get_images')->where('make', $make)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get(); 
+        $filter_query = trade_your_car::with('get_images')->where('make', $make)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
         }else{
-        $filter_query = trade_your_car::with('get_images')->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();    
+        $filter_query = trade_your_car::with('get_images')->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
         }
-      	
+
       	if($location == 'true') {
     	return $filter_query->where('city', $user_city);
 		}else{
         return $filter_query;
         }
-      	
-      	
+
+
 
     }
 
 
-   
+
     public function bidSell($user_id = null)
     {
 
@@ -639,7 +636,7 @@ class Trade_Your_CarController extends Controller
 
     public function bidTrade($user_id = null)
     {
-        
+
             return auction_bids::with('get_images')
             ->join('trade_your_car', 'trade_your_car.id', '=', 'auction_bids.auction_item_id')
             ->join('users', 'users.id', '=', 'trade_your_car.user_id')
@@ -654,8 +651,8 @@ class Trade_Your_CarController extends Controller
 
     function addBid(Request $req){
 
-        
-        
+
+
         $bidsSelect = auction_bids::where('dealer_user_id', '=', $req->input('dealer_id'))->where('auction_item_id', '=', $req->input('item_id'))->first();
 
         if ($bidsSelect === null) {
@@ -670,7 +667,7 @@ class Trade_Your_CarController extends Controller
 
         }else{
 
-            return response()->json(['message' => "You have already bid on this item.", 'status' => '204'], 204);   
+            return response()->json(['message' => "You have already bid on this item.", 'status' => '204'], 204);
 
         }
     }
@@ -689,18 +686,18 @@ class Trade_Your_CarController extends Controller
         ->get();
 
         }elseif($user_type == 'dealer'){
-        
+
             return DB::table('messaging')
             ->join('users', 'users.id', '=', 'messaging.owner_id')
             ->where('dealer_id', '=', $user_id)
             ->groupBy('item_id')
             ->orderBy('messaging.id', 'DESC')
             ->select('messaging.*', 'users.dp', 'users.name')
-            ->get();   
-            
+            ->get();
+
         }
 
-        
+
     }
 
 
@@ -710,7 +707,7 @@ class Trade_Your_CarController extends Controller
         ->join('users', 'users.id', '=', 'messaging.sent_by')
         ->select('messaging.*', 'users.dp', 'users.name')
             ->where('item_id', '=', $conversation)
-            ->get();   
+            ->get();
 
     }
 
@@ -737,7 +734,7 @@ class Trade_Your_CarController extends Controller
         $bid_id =$req->input('bid_id');
         $status =$req->input('status');
         if($status == 'Accepted'){
-            
+
             $userdp = auction_bids::where('bid_id', $bid_id)->update(['approved_status' => DB::raw('approved_status + 1')]);
             return response()->json(['message' => "OK", 'status' => '200'], 200);
 
@@ -745,8 +742,8 @@ class Trade_Your_CarController extends Controller
             $userdp = auction_bids::where('bid_id', $bid_id)->update(array('approved_status' => 7));
             return response()->json(['message' => "OK", 'status' => '200'], 200);
         }
-        
+
     }
-    
+
 
 }
