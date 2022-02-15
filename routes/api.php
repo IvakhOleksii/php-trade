@@ -34,7 +34,9 @@ Route::post('/check_vin', [UserController::class, 'checkVin']);
 Route::post('/sell_your_car', [Sell_Your_CarController::class, 'add']);
 Route::post('/trade_your_car', [Trade_Your_CarController::class, 'add']);
 Route::get('/trade_your_car_list', [Trade_Your_CarController::class, 'list']);
-Route::get('/sell_your_car_list', [Trade_Your_CarController::class, 'listSell']);
+
+Route::get('/sell_your_car_list', [Trade_Your_CarController::class, 'listSell'])->middleware('auth');;
+
 Route::get('/get_all', [Trade_Your_CarController::class, 'GetAll']);
 Route::get('applied_auction/{section?}/{filter?}', [Trade_Your_CarController::class, 'section']);
 Route::get('/won/{filter?}', [Trade_Your_CarController::class, 'won']);
@@ -48,4 +50,3 @@ Route::post('/contact_us', [UserController::class, 'contact']);
 Route::get('/messaging_conversation/{user_id?}/{user_type?}', [Trade_Your_CarController::class, 'messaging_conversation']);
 Route::get('/conversation/{conversation?}', [Trade_Your_CarController::class, 'conversation']);
 Route::post('/addmessaging', [Trade_Your_CarController::class, 'addMessaging']);
-
