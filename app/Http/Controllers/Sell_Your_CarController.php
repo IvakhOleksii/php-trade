@@ -87,27 +87,27 @@ class Trade_Your_CarController extends Controller
         $sell_id = $car->id;
 
 
-        
 
-      
-        
+
+
+
 
 
         $allowedfileExtension=['jpg','png','JPG','PNG','jpeg','JPEG'];
          /// starting front_Seats Image Upload
          if($req->hasFile('front_Seats')) {
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('front_Seats'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('front_Seats');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->front_Seats as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -122,11 +122,11 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
         /// ending front_Seats Image Upload
 
@@ -137,17 +137,17 @@ class Trade_Your_CarController extends Controller
         /// starting dash Image Upload
         if($req->hasFile('dash')) {
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('dash'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('dash');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->dash as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -162,29 +162,29 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending dash Image Upload         
+        /// ending dash Image Upload
 
 
         /// starting navigation Image Upload
         if($req->hasFile('navigation')) {
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('navigation'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('navigation');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->navigation as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -199,29 +199,29 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending dash Image Upload     
+        /// ending dash Image Upload
 
 
          /// starting front Image Upload
          if($req->hasFile('front')) {
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('front'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('front');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->front as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -236,29 +236,29 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending front Image Upload    
+        /// ending front Image Upload
 
 
           /// starting rear Image Upload
           if($req->hasFile('rear')) {
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('rear'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('rear');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->rear as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -273,13 +273,13 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending rear Image Upload   
+        /// ending rear Image Upload
 
 
 
@@ -288,17 +288,17 @@ class Trade_Your_CarController extends Controller
           /// starting driver_s_side Image Upload
           if($req->hasFile('driver_s_side')) {
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('driver_s_side'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('driver_s_side');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->driver_s_side as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -313,30 +313,30 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending driver_s_side Image Upload           
+        /// ending driver_s_side Image Upload
 
 
 
         /// starting driver_s_side Image Upload
         if($req->hasFile('passenger_s_side')) {
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('passenger_s_side'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('passenger_s_side');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->passenger_s_side as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -351,17 +351,17 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 //return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
-        /// ending passenger_s_side Image Upload         
+        /// ending passenger_s_side Image Upload
 
-        
 
-        
+
+
 
 
 
@@ -371,17 +371,17 @@ class Trade_Your_CarController extends Controller
         /// starting Image Upload
         if($req->hasFile('additional_photos')) {
            // return response()->json(['message' => "OK", 'status' => '200'], 200);
-           
-                        $files = $req->file('additional_photos'); 
-                    
-                        foreach ($files as $file) {      
+
+                        $files = $req->file('additional_photos');
+
+                        foreach ($files as $file) {
                             $extension = $file->getClientOriginalExtension();
-                    
+
                             $check = in_array($extension,$allowedfileExtension);
-                    
+
                             if($check) {
                                 foreach($req->additional_photos as $mediaFiles) {
-                    
+
                                     $url = $mediaFiles->store('public/images/');
                                     $name = $mediaFiles->getClientOriginalName();
                                     $file_name = str_replace("public/images/","",$url);
@@ -395,11 +395,11 @@ class Trade_Your_CarController extends Controller
                             } else {
                                 return response()->json(['invalid_file_format'], 422);
                             }
-                    
+
                             //return response()->json(['file_uploaded'], 200);
-                    
+
                         }
-        
+
                  }
         /// ending Image Upload
 
@@ -412,12 +412,9 @@ class Trade_Your_CarController extends Controller
     }
     public function list()
     {
-
-        
-        
         return trade_your_car::with('get_images')->get();
     }
-   
+
 
 
 }
