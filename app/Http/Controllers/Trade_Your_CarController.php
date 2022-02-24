@@ -485,17 +485,55 @@ class Trade_Your_CarController extends Controller
     {
         return $this->belongsToMany('Category', 'category_products');
     }
-    public function list()
+    public function list(Request $req)
     {
+        //Check for type error
+        if(!$req->type || !$req->user_type) {
+            return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
+        }
+        $query = trade_your_car::with('get_images')->where('type', $req->type);
 
+        if($req->user_id && $req->user_type == 'Car Owner') {
+            $query = $query->where('user_id',$req->user_id);
+            //Check for draft or published
+            if($req->publish_status) {
+                $query = $query->where('publish_status',$req->publish_status);
+            }
+            else {
+                $query = $query->where('publish_status','publish');
+            }
+            //Check for expired auctions
+            $now = date("Y-m-d H:i:s");
+            if($req->expired) {
+                $query = $query->where('expiry_at','<=',$now);
+            }
+            else {
+                //return response()->json(['error' => ' Bad request type not set', 'now' => $now], 400);
+                 $query = $query->where('expiry_at','>=',$now);
+            }
 
-
-        return trade_your_car::with('get_images')->where('type', 'trade')->orderBy('id', 'DESC')->get();
+        }
+        return $query->orderBy('id', 'DESC')->get();
     }
 
-    public function listSell()
+    public function listSell(Request $req)
     {
-        return trade_your_car::with('get_images')->where('type', 'sell')->orderBy('id', 'DESC')->get();
+        $query = trade_your_car::with('get_images')->where('type', 'sell');
+        //Car owner
+        if($req->user_id && $req->user_type == 'Car Owner') {
+            $query = $query->where('user_id',$req->user_id);
+            //Check for draft or published
+            if($req->publish_status) {
+                $query = $query->where('publish_status',$req->publish_status);
+            }
+            else {
+                $query = $query->where('publish_status','publish');
+            }
+
+        }
+        return $query->orderBy('id', 'DESC')->get();
+
+
     }
 
     public function GetAll()
