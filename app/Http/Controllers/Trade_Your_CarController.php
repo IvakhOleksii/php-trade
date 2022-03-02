@@ -487,11 +487,12 @@ class Trade_Your_CarController extends Controller
     }
     public function list(Request $req)
     {
+        $now = date("Y-m-d H:i:s");
         //Check for type error
         if(!$req->type || !$req->user_type) {
             return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
         }
-        $query = trade_your_car::with('get_images')->where('type', $req->type);
+        $query = trade_your_car::with('get_images')->with('auction_bids')->where('type', $req->type);
 
         if($req->user_id && $req->user_type == 'Car Owner') {
             $query = $query->where('user_id',$req->user_id);
@@ -501,17 +502,13 @@ class Trade_Your_CarController extends Controller
             }
             else {
                 $query = $query->where('publish_status','publish');
+                if($req->expired) {
+                    $query = $query->where('expiry_at','<=',$now);
+                }
+                else {
+                    $query = $query->where('expiry_at','>=',$now);
+                }
             }
-            //Check for expired auctions
-            $now = date("Y-m-d H:i:s");
-            if($req->expired) {
-                $query = $query->where('expiry_at','<=',$now);
-            }
-            else {
-                //return response()->json(['error' => ' Bad request type not set', 'now' => $now], 400);
-                 $query = $query->where('expiry_at','>=',$now);
-            }
-
         }
         return $query->orderBy('id', 'DESC')->get();
     }
