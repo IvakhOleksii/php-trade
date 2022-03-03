@@ -485,31 +485,33 @@ class Trade_Your_CarController extends Controller
     {
         return $this->belongsToMany('Category', 'category_products');
     }
-    public function list(Request $req)
+    public function list_owner(Request $req)
     {
         $now = date("Y-m-d H:i:s");
         //Check for type error
-        if(!$req->type || !$req->user_type) {
+        if(!$req->type || !$req->user_id) {
             return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
         }
         $query = trade_your_car::with('get_images')->with('auction_bids')->where('type', $req->type);
-
-        if($req->user_id && $req->user_type == 'Car Owner') {
-            $query = $query->where('user_id',$req->user_id);
-            //Check for draft or published
-            if($req->publish_status) {
-                $query = $query->where('publish_status',$req->publish_status);
-            }
-            else {
-                $query = $query->where('publish_status','publish');
-                if($req->expired) {
-                    $query = $query->where('expiry_at','<=',$now);
-                }
-                else {
-                    $query = $query->where('expiry_at','>=',$now);
-                }
-            }
+        if($req->bids) {
+            $query = $query->has('auction_bids');
         }
+
+        $query = $query->where('user_id',$req->user_id);
+        //Check for draft or published
+         if($req->publish_status) {
+            $query = $query->where('publish_status',$req->publish_status);
+         }
+         else {
+          $query = $query->where('publish_status','publish');
+          if($req->expired) {
+             $query = $query->where('expiry_at','<=',$now);
+           }
+           else {
+             $query = $query->where('expiry_at','>=',$now);
+            }
+          }
+
         return $query->orderBy('id', 'DESC')->get();
     }
 
