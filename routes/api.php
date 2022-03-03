@@ -36,7 +36,7 @@ Route::post('/sell_your_car', [Sell_Your_CarController::class, 'add']);
 Route::post('/trade_your_car', [Trade_Your_CarController::class, 'add']);
 Route::get('/trade_your_car_list', [Trade_Your_CarController::class, 'list']);
 Route::get('/sell_your_car_list', [Trade_Your_CarController::class, 'listSell']);
-Route::get('/list_auction', [Trade_Your_CarController::class, 'list']);
+Route::get('/list_auction_owner', [Trade_Your_CarController::class, 'list_owner']);
 //Route::get('/sell_your_car_list', [Trade_Your_CarController::class, 'listSell'])->middleware('auth');
 Route::get('/get_all', [Trade_Your_CarController::class, 'GetAll']);
 Route::get('applied_auction/{section?}/{filter?}', [Trade_Your_CarController::class, 'section']);
