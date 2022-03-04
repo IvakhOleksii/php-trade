@@ -517,18 +517,8 @@ class Trade_Your_CarController extends Controller
     public function list_dealer(Request $req)
     {
         $now = date("Y-m-d H:i:s");
-        //Check for type error
-        if(!$req->type) {
-            return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
-        }
-        //All Current auctions
-        /*
-        $query = trade_your_car::with('get_images')->select('trade_your_car.*','bids.*')
-        ->join('auction_bids as bids', 'bids.auction_item_id', '=', 'trade_your_car.id')
-        ->where('type', $req->type)->where('trade_your_car.publish_status','publish');
-        */
-        $query = trade_your_car::with('get_images')->with('auction_bids')
-        ->where('trade_your_car.type', $req->type)->where('trade_your_car.publish_status','publish');
+
+        $query = trade_your_car::with('get_images')->with('auction_bids')->where('trade_your_car.publish_status','publish');
         //If not top bids set to acitve auctions
         if(!$req->top_bids) {
             $query = $query->where('trade_your_car.expiry_at','>=',$now);
