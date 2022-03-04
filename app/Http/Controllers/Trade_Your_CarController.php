@@ -492,7 +492,7 @@ class Trade_Your_CarController extends Controller
         if(!$req->type || !$req->user_id) {
             return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
         }
-        $query = trade_your_car::with('get_images')->with('auction_bids')->where('type', $req->type);
+        $query = trade_your_car::with('get_images')->with('auction_bids')->where('type', $req->type)->where('publish_status','!=','rejected');
         if($req->bids) {
             $query = $query->has('auction_bids');
         }
@@ -511,6 +511,43 @@ class Trade_Your_CarController extends Controller
              $query = $query->where('expiry_at','>=',$now);
             }
           }
+
+        return $query->orderBy('id', 'DESC')->get();
+    }
+    public function list_dealer(Request $req)
+    {
+        $now = date("Y-m-d H:i:s");
+        //Check for type error
+        if(!$req->type) {
+            return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
+        }
+        //All Current auctions
+        /*
+        $query = trade_your_car::with('get_images')->select('trade_your_car.*','bids.*')
+        ->join('auction_bids as bids', 'bids.auction_item_id', '=', 'trade_your_car.id')
+        ->where('type', $req->type)->where('trade_your_car.publish_status','publish');
+        */
+        $query = trade_your_car::with('get_images')->with('auction_bids')
+        ->where('trade_your_car.type', $req->type)->where('trade_your_car.publish_status','publish');
+        //If not top bids set to acitve auctions
+        if(!$req->top_bids) {
+            $query = $query->where('trade_your_car.expiry_at','>=',$now);
+        }
+        if(($req->current_bids || $req->top_bids) && !$req->dealer_id) {
+            return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
+        }
+        //Published and currently has a bid by this user
+        if($req->current_bids) {
+              $query = $query->whereHas('auction_bids', function($query) use ($req) {
+                $query->where('dealer_user_id', $req->dealer_id);
+             });
+        }
+         //Not published and top bid
+        if($req->top_bids) {
+            $query = $query->whereHas('auction_bids', function($query) use ($req) {
+                $query->where('dealer_user_id', $req->dealer_id);
+             });
+        }
 
         return $query->orderBy('id', 'DESC')->get();
     }
