@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use League\Flysystem\Config;
+
 use Illuminate\Http\Request;
 
 use App\Models\trade_your_car;
@@ -22,6 +24,7 @@ use GuzzleHttp\Client;
 
 use Illuminate\Support\Facades\Http;
 use DB;
+use PhpParser\Node\Expr\Cast\Object_;
 
 class Trade_Your_CarController extends Controller
 {
@@ -511,14 +514,21 @@ class Trade_Your_CarController extends Controller
              $query = $query->where('expiry_at','>=',$now);
             }
           }
-
-        return $query->orderBy('id', 'DESC')->get();
+        $start = $req->start ? $req->start : 0;
+        $limit = config('constants.pagination.items_per_page');
+        $return_obj['start'] = $start+$limit;
+        $return_obj['limit'] = $limit;
+        $return_obj['total'] = $query->count();
+        $return_obj['auctions'] = $query->orderBy('id', 'DESC')->skip($start)->take($limit)->get();
+        return $return_obj;
     }
     public function list_dealer(Request $req)
     {
         $now = date("Y-m-d H:i:s");
 
+        //Query current auction results
         $query = trade_your_car::with('get_images')->with('auction_bids')->where('trade_your_car.publish_status','publish');
+
         //If not top bids set to acitve auctions
         if(!$req->top_bids) {
             $query = $query->where('trade_your_car.expiry_at','>=',$now);
@@ -532,14 +542,50 @@ class Trade_Your_CarController extends Controller
                 $query->where('dealer_user_id', $req->dealer_id);
              });
         }
+        //Check for Car Make
+        if($req->make) {
+            $query->where('trade_your_car.make',$req->make);
+        }
+        //Check for Car Model
+        if($req->model) {
+            $query->where('trade_your_car.model',$req->model);
+        }
          //Not published and top bid
+         //TODO Fix this for load more pagination
         if($req->top_bids) {
             $query = $query->whereHas('auction_bids', function($query) use ($req) {
                 $query->where('dealer_user_id', $req->dealer_id);
              });
+
+            $results = $query->get();
+            $return_results = [];
+            //Loop through results and check for top bid
+            foreach ($results as $result) {
+                $top_bid = null;
+               //Go through auctions and get top bid
+               foreach ($result->auction_bids as $value) {
+                if(!$top_bid) {
+                    $top_bid = $value;
+                }
+                if($value->bid_price > $top_bid->bid_price) {
+                  $top_bid = $value;
+                }
+               }
+               if($top_bid->dealer_user_id == $req->dealer_id) {
+                  array_push($return_results, $results[0]);
+               }
+            }
+            return $return_results;
         }
 
-        return $query->orderBy('id', 'DESC')->get();
+        $start = $req->start ? $req->start : 0;
+        $limit = config('constants.pagination.items_per_page');
+        $return_obj['start'] = $start+$limit;
+        $return_obj['limit'] = $limit;
+        $return_obj['total'] = $query->count();
+        $return_obj['auctions'] = $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->get();
+
+        return $return_obj;
     }
 
     public function listSell(Request $req)
@@ -714,9 +760,6 @@ class Trade_Your_CarController extends Controller
 
 
     function addBid(Request $req){
-
-
-
         $bidsSelect = auction_bids::where('dealer_user_id', '=', $req->input('dealer_id'))->where('auction_item_id', '=', $req->input('item_id'))->first();
 
         if ($bidsSelect === null) {
