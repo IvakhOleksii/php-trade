@@ -41,9 +41,13 @@ class UserController extends Controller
         $user->car_make=$req->input('car_make');
         $user->latitude=$req->input('latitude');
         $user->longitude=$req->input('longitude');
+        $user->zip_code=$req->input('zip_code');
 
-
-
+        //Add the default image for users if not there
+        if($user->user_type = 'Car Owner' && !$req->hasFile('dealer_image')) {
+            $file_name = "default-user.jpeg";
+            $user->dp = $file_name;
+        }
 
         $userss = User::where('email', '=', $req->input('email'))->first();
         if ($userss === null) {
@@ -124,7 +128,8 @@ class UserController extends Controller
 
                                         $user->save();
 
-                                        $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
+                                        $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
+                                        "zip_code"=>$user->zip_cdoe,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
                                         return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
 
         } else {
