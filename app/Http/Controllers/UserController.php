@@ -129,7 +129,7 @@ class UserController extends Controller
                                         $user->save();
 
                                         $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
-                                        "zip_code"=>$user->zip_cdoe,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
+                                        "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
                                         return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
 
         } else {
@@ -208,11 +208,8 @@ class UserController extends Controller
         $dealername = $request->input('dealername');
         $companywebsite = $request->input('companywebsite');
         $car_make = $request->input('car_make');
-        //$userP = User::find($user_id);
-        //$userP->update($request->all());
+        $zip_code = $request->input('zip_code');
 
-         /// starting dp Upload
-         $name = '';
          $url = '';
          $allowedfileExtension=['jpg','png','PNG','JPG','jpeg','JPEG'];
 
@@ -290,10 +287,10 @@ class UserController extends Controller
 
 
 
-       $userP = User::where('id', $user_id)->update(array('car_make' => $car_make,'name' => $fname,'email' => $email,'user_type' => $user_type,'state' => $state,'city' => $city,'address' => $address,'phone' => $phone,'dealername' => $dealername,'companywebsite' => $companywebsite));
+       $userP = User::where('id', $user_id)->update(array('car_make' => $car_make,'name' => $fname,'email' => $email,'user_type' => $user_type,'state' => $state,'city' => $city,'address' => $address,'phone' => $phone,'dealername' => $dealername,'companywebsite' => $companywebsite, 'zip_code' => $zip_code));
 
         $user =User::where('id',$user_id)->first();
-        $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealername"=>$user->dealername, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$user->dealer_licence, "dealer_image"=>$user->dp);
+        $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealername"=>$user->dealername, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$user->dealer_licence, "dealer_image"=>$user->dp, "zip_code"=>$user->zip_code);
 
         return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
 
