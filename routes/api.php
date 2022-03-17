@@ -52,3 +52,6 @@ Route::post('/contact_us', [UserController::class, 'contact']);
 Route::get('/messaging_conversation/{user_id?}/{user_type?}', [Trade_Your_CarController::class, 'messaging_conversation']);
 Route::get('/conversation/{conversation?}', [Trade_Your_CarController::class, 'conversation']);
 Route::post('/addmessaging', [Trade_Your_CarController::class, 'addMessaging']);
+
+
+Route::get('/bidhistory/{auction_id?}', [Trade_Your_CarController::class, 'bidHistory']);
