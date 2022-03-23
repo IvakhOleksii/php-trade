@@ -45,7 +45,7 @@ class UserController extends Controller
 
         //Add the default image for users if not there
         if($user->user_type == 'Car Owner' && !$req->hasFile('dealer_image')) {
-            $file_name = "default-user.jpeg";
+            $file_name = "/default-user.jpeg";
             $user->dp = $file_name;
         }
 
