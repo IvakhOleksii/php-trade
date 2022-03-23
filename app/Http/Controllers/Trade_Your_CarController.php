@@ -38,7 +38,7 @@ class Trade_Your_CarController extends Controller
         $car->transmission=$req->input('transmission');
         $car->trim=$req->input('trim');
         $car->drivetrain=$req->input('drivetrain');
-      	$car->mileage=$req->input('mileage');
+      	$car->mileage=$req->input('odometer');
         $car->engine=$req->input('engine');
         $car->fuel_type=$req->input('fuel_type');
         $car->year=$req->input('year');
