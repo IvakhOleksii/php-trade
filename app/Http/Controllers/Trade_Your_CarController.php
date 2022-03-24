@@ -857,7 +857,7 @@ class Trade_Your_CarController extends Controller
         return auction_bids::where('auction_item_id',$auction_id)
             ->join('trade_your_car', 'auction_bids.auction_item_id', '=', 'trade_your_car.id')
             ->join('users', 'auction_bids.dealer_user_id', '=', 'users.id')
-            ->select('trade_your_car.created_at', 'auction_bids.bid_price')
+            ->select('trade_your_car.created_at as start_date', 'auction_bids.bid_price')
             ->get();
     }
 
