@@ -8,6 +8,8 @@ use App\Models\User;
 
 use App\Models\contact_us;
 
+use App\Mail\Registration;
+
 use Illuminate\Support\Facades\Hash;
 
 use Illuminate\Validation\Validator;
@@ -17,6 +19,8 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 
 use Illuminate\Support\Facades\Auth;
+
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -45,7 +49,7 @@ class UserController extends Controller
 
         //Add the default image for users if not there
         if($user->user_type == 'Car Owner' && !$req->hasFile('dealer_image')) {
-            $file_name = "default-user.jpeg";
+            $file_name = "/default-user.jpeg";
             $user->dp = $file_name;
         }
 
@@ -128,8 +132,15 @@ class UserController extends Controller
 
                                         $user->save();
 
+                                        // Send email notification
+                                        Mail::to(array(
+                                            'email' => $user->email
+                                        ))->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer"));
+
                                         $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
                                         "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
+                                        
+                                        
                                         return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
 
         } else {
