@@ -7,22 +7,24 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class Registration extends Mailable
+class Auction extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $name;
     public $type;
+    public $info;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($name, $type)
+    public function __construct($name, $type, $info)
     {
         $this->name = $name;
         $this->type = $type;
+        $this->info = $info;
     }
 
     /**
@@ -33,7 +35,7 @@ class Registration extends Mailable
     public function build()
     {
         return $this
-            ->subject("Done! Your {$this->type} account has been created")
-            ->view($this->type == "owner" ? "emails.owner-registration" : "emails.dealer-registration");
+            ->subject("Your auction has been " . ($this->type == 'publish' ? 'published' : 'rejected'))
+            ->view("emails.auction-submitted");
     }
 }
