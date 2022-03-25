@@ -6,6 +6,8 @@ use League\Flysystem\Config;
 
 use Illuminate\Http\Request;
 
+use App\Mail\Auction;
+
 use App\Models\trade_your_car;
 
 use App\Models\auction_bids;
@@ -13,6 +15,8 @@ use App\Models\auction_bids;
 use App\Models\trade_car_images;
 
 use App\Models\messaging;
+
+use App\Models\User;
 
 use Carbon\Carbon;
 
@@ -23,6 +27,9 @@ use Illuminate\Validation\Validator;
 use GuzzleHttp\Client;
 
 use Illuminate\Support\Facades\Http;
+
+use Illuminate\Support\Facades\Mail;
+
 use DB;
 use PhpParser\Node\Expr\Cast\Object_;
 
@@ -476,6 +483,21 @@ class Trade_Your_CarController extends Controller
         /// ending Image Upload
 
         //return response()->json(['file_uploaded'], 200);
+
+        // Check draft or published and send email notification if published
+        if ($car->publish_status && $car->publish_status != "draft") {
+            $user = User::find($car->user_id);
+            Mail::to($user)->send(new Auction(
+                $user->name,
+                $car->publish_status,
+                array(
+                    'year' => $car->year,
+                    'mileage' => $car->mileage,
+                    'make' => $car->make,
+                    'model' => $car->model
+                )
+            ));
+        }
 
         if($req->input('id')){
             return response()->json(['Data Updated'], 200);
