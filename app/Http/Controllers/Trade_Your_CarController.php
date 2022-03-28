@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 
 use App\Mail\Auction;
 
+use App\Mail\Message;
+
 use App\Models\trade_your_car;
 
 use App\Models\auction_bids;
@@ -851,6 +853,26 @@ class Trade_Your_CarController extends Controller
         $msg->message=$req->input('message');
         $msg->sent_by=$req->input('sent_by');
         $msg->save();
+
+        // Send email notification
+        $sender = User::find($msg->sent_by);
+
+        $recipient = null;
+        if ($msg->sent_by == $msg->dealer_id) {
+            $recipient = User::find($msg->owner_id);
+        } else if ($msg->sent_by == $msg->owner_id) {
+            $recipient = User::find($msg->dealer_id);
+        }
+
+        if ($recipient) {
+            $item = trade_your_car::find($msg->item_id);
+            Mail::to($sender)->send(new Message(
+                $sender->name,
+                $recipient->name,
+                "{$item->make} {$item->model}, {$item->vin}"
+            ));
+        }
+
         return response()->json(['message' => "OK", 'status' => '200'], 200);
 
     }

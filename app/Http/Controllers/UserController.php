@@ -39,7 +39,6 @@ class UserController extends Controller
         $user->city=$req->input('city');
         $user->address=$req->input('address');
         $user->phone=$req->input('phone');
-        $user->name=$req->input('name');
         $user->dealerName=$req->input('dealername');
         $user->companywebsite=$req->input('companywebsite');
         $user->car_make=$req->input('car_make');
@@ -133,9 +132,7 @@ class UserController extends Controller
                                         $user->save();
 
                                         // Send email notification
-                                        Mail::to(array(
-                                            'email' => $user->email
-                                        ))->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer"));
+                                        Mail::to($user)->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer"));
 
                                         $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
                                         "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
