@@ -45,7 +45,7 @@ class Trade_Your_CarController extends Controller
         $car->transmission=$req->input('transmission');
         $car->trim=$req->input('trim');
         $car->drivetrain=$req->input('drivetrain');
-      	$car->mileage=$req->input('mileage');
+      	$car->mileage=$req->input('odometer');
         $car->engine=$req->input('engine');
         $car->fuel_type=$req->input('fuel_type');
         $car->year=$req->input('year');
@@ -879,7 +879,7 @@ class Trade_Your_CarController extends Controller
         return auction_bids::where('auction_item_id',$auction_id)
             ->join('trade_your_car', 'auction_bids.auction_item_id', '=', 'trade_your_car.id')
             ->join('users', 'auction_bids.dealer_user_id', '=', 'users.id')
-            ->select('users.dealername', 'auction_bids.bid_price', 'users.email','users.phone')
+            ->select('trade_your_car.created_at as start_date', 'auction_bids.bid_price')
             ->get();
     }
 
