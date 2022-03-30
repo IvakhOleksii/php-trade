@@ -10,6 +10,8 @@ use App\Mail\Auction;
 
 use App\Mail\Message;
 
+use App\Mail\Bid;
+
 use App\Models\trade_your_car;
 
 use App\Models\auction_bids;
@@ -787,19 +789,28 @@ class Trade_Your_CarController extends Controller
         $bidsSelect = auction_bids::where('dealer_user_id', '=', $req->input('dealer_id'))->where('auction_item_id', '=', $req->input('item_id'))->first();
 
         if ($bidsSelect === null) {
+            $bids = new auction_bids;
+            $bids->bid_price=$req->input('bid_amount');
+            $bids->dealer_user_id=$req->input('dealer_id');
+            $bids->auction_item_id=$req->input('item_id');
+            $bids->owner_user=$req->input('owner_id');
+            $bids->save();
 
-        $bids   = new auction_bids;
-        $bids->bid_price=$req->input('bid_amount');
-        $bids->dealer_user_id=$req->input('dealer_id');
-        $bids->auction_item_id=$req->input('item_id');
-        $bids->owner_user=$req->input('owner_id');
-        $bids->save();
-        return response()->json(['message' => "OK", 'status' => '200'], 200);
+            // Send email notification
+            $owner = User::find($bids->owner_user);
+            $dealer = User::find($bids->dealer_user_id);
+            $auctionItem = trade_your_car::find($bids->auction_item_id);
+            $itemName = "{$auctionItem->make} {$auctionItem->model}, {$auctionItem->vin}";
+            Mail::to($owner)->send(new Message(
+                $owner->name,
+                $dealer,
+                $itemName,
+                $bids->bid_price
+            ));
 
-        }else{
-
+            return response()->json(['message' => "OK", 'status' => '200'], 200);
+        } else {
             return response()->json(['message' => "You have already bid on this item.", 'status' => '204'], 204);
-
         }
     }
 
