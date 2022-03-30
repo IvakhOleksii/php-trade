@@ -4,7 +4,7 @@
 
 <p>
   Dear {{ $name }},<br><br>
-  You have received a new bid on {{ $itemName }}. Here is the dealer information.<br><br>
+  You have received a new bid on <b>{{ $itemName }}</b>. Here is the dealer information.<br><br>
   <b>Name</b>: {{ $dealer->name }}<br>
   <b>Email</b>: {{ $dealer->email }}<br>
   
