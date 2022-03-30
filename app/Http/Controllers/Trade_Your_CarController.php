@@ -801,7 +801,7 @@ class Trade_Your_CarController extends Controller
             $dealer = User::find($bids->dealer_user_id);
             $auctionItem = trade_your_car::find($bids->auction_item_id);
             $itemName = "{$auctionItem->make} {$auctionItem->model}, {$auctionItem->vin}";
-            Mail::to($owner)->send(new Message(
+            Mail::to($owner)->send(new Bid(
                 $owner->name,
                 $dealer,
                 $itemName,
