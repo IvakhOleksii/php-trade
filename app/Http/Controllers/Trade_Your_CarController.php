@@ -877,7 +877,7 @@ class Trade_Your_CarController extends Controller
 
         if ($recipient) {
             $item = trade_your_car::find($msg->item_id);
-            Mail::to($sender)->send(new Message(
+            Mail::to($recipient)->send(new Message(
                 $sender->name,
                 $recipient->name,
                 "{$item->make} {$item->model}, {$item->vin}"
