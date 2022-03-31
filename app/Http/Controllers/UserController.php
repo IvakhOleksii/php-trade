@@ -8,6 +8,8 @@ use App\Models\User;
 
 use App\Models\contact_us;
 
+use App\Mail\Registration;
+
 use Illuminate\Support\Facades\Hash;
 
 use Illuminate\Validation\Validator;
@@ -17,6 +19,8 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 
 use Illuminate\Support\Facades\Auth;
+
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -35,7 +39,6 @@ class UserController extends Controller
         $user->city=$req->input('city');
         $user->address=$req->input('address');
         $user->phone=$req->input('phone');
-        $user->name=$req->input('name');
         $user->dealerName=$req->input('dealername');
         $user->companywebsite=$req->input('companywebsite');
         $user->car_make=$req->input('car_make');
@@ -128,8 +131,13 @@ class UserController extends Controller
 
                                         $user->save();
 
+                                        // Send email notification
+                                        Mail::to($user)->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer"));
+
                                         $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
                                         "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
+                                        
+                                        
                                         return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
 
         } else {

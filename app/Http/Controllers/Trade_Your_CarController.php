@@ -6,6 +6,12 @@ use League\Flysystem\Config;
 
 use Illuminate\Http\Request;
 
+use App\Mail\Auction;
+
+use App\Mail\Message;
+
+use App\Mail\Bid;
+
 use App\Models\trade_your_car;
 
 use App\Models\auction_bids;
@@ -13,6 +19,8 @@ use App\Models\auction_bids;
 use App\Models\trade_car_images;
 
 use App\Models\messaging;
+
+use App\Models\User;
 
 use Carbon\Carbon;
 
@@ -23,6 +31,9 @@ use Illuminate\Validation\Validator;
 use GuzzleHttp\Client;
 
 use Illuminate\Support\Facades\Http;
+
+use Illuminate\Support\Facades\Mail;
+
 use DB;
 use PhpParser\Node\Expr\Cast\Object_;
 
@@ -477,6 +488,21 @@ class Trade_Your_CarController extends Controller
 
         //return response()->json(['file_uploaded'], 200);
 
+        // Check draft or published and send email notification if published
+        if ($car->publish_status && $car->publish_status != "draft") {
+            $user = User::find($car->user_id);
+            Mail::to($user)->send(new Auction(
+                $user->name,
+                $car->publish_status,
+                array(
+                    'year' => $car->year,
+                    'mileage' => $car->mileage,
+                    'make' => $car->make,
+                    'model' => $car->model
+                )
+            ));
+        }
+
         if($req->input('id')){
             return response()->json(['Data Updated'], 200);
         }else{
@@ -763,19 +789,28 @@ class Trade_Your_CarController extends Controller
         $bidsSelect = auction_bids::where('dealer_user_id', '=', $req->input('dealer_id'))->where('auction_item_id', '=', $req->input('item_id'))->first();
 
         if ($bidsSelect === null) {
+            $bids = new auction_bids;
+            $bids->bid_price=$req->input('bid_amount');
+            $bids->dealer_user_id=$req->input('dealer_id');
+            $bids->auction_item_id=$req->input('item_id');
+            $bids->owner_user=$req->input('owner_id');
+            $bids->save();
 
-        $bids   = new auction_bids;
-        $bids->bid_price=$req->input('bid_amount');
-        $bids->dealer_user_id=$req->input('dealer_id');
-        $bids->auction_item_id=$req->input('item_id');
-        $bids->owner_user=$req->input('owner_id');
-        $bids->save();
-        return response()->json(['message' => "OK", 'status' => '200'], 200);
+            // Send email notification
+            $owner = User::find($bids->owner_user);
+            $dealer = User::find($bids->dealer_user_id);
+            $auctionItem = trade_your_car::find($bids->auction_item_id);
+            $itemName = "{$auctionItem->make} {$auctionItem->model}, {$auctionItem->vin}";
+            Mail::to($owner)->send(new Bid(
+                $owner->name,
+                $dealer,
+                $itemName,
+                $bids->bid_price
+            ));
 
-        }else{
-
+            return response()->json(['message' => "OK", 'status' => '200'], 200);
+        } else {
             return response()->json(['message' => "You have already bid on this item.", 'status' => '204'], 204);
-
         }
     }
 
@@ -829,6 +864,26 @@ class Trade_Your_CarController extends Controller
         $msg->message=$req->input('message');
         $msg->sent_by=$req->input('sent_by');
         $msg->save();
+
+        // Send email notification
+        $sender = User::find($msg->sent_by);
+
+        $recipient = null;
+        if ($msg->sent_by == $msg->dealer_id) {
+            $recipient = User::find($msg->owner_id);
+        } else if ($msg->sent_by == $msg->owner_id) {
+            $recipient = User::find($msg->dealer_id);
+        }
+
+        if ($recipient) {
+            $item = trade_your_car::find($msg->item_id);
+            Mail::to($recipient)->send(new Message(
+                $sender->name,
+                $recipient->name,
+                "{$item->make} {$item->model}, {$item->vin}"
+            ));
+        }
+
         return response()->json(['message' => "OK", 'status' => '200'], 200);
 
     }
