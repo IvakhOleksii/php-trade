@@ -815,33 +815,27 @@ class Trade_Your_CarController extends Controller
     }
 
 
-    function messaging_conversation($user_id = null,$user_type = null){
-
-        if($user_type == 'owner'){
-
-        return DB::table('messaging')
-        ->join('users', 'users.id', '=', 'messaging.dealer_id')
-        ->where('owner_id', '=', $user_id)
-        ->groupBy('item_id')
-        ->orderBy('messaging.id', 'desc')
-        ->select('messaging.*', 'users.dp', 'users.name')
-        ->get();
-
-        }elseif($user_type == 'dealer'){
-
+    function messaging_conversation($user_id = null, $user_type = null) {
+        if ($user_type == 'owner') {
             return DB::table('messaging')
-            ->join('users', 'users.id', '=', 'messaging.owner_id')
-            ->where('dealer_id', '=', $user_id)
-            ->groupBy('item_id')
-            ->orderBy('messaging.id', 'DESC')
-            ->select('messaging.*', 'users.dp', 'users.name')
-            ->get();
-
+                ->join('users', 'users.id', '=', 'messaging.dealer_id')
+                ->where('owner_id', '=', $user_id)
+                ->where('approved_status', '=', 1)
+                ->groupBy('item_id')
+                ->orderBy('messaging.id', 'desc')
+                ->select('messaging.*', 'users.dp', 'users.name')
+                ->get();
+        } elseif ($user_type == 'dealer') {
+            return DB::table('messaging')
+                ->join('users', 'users.id', '=', 'messaging.owner_id')
+                ->where('dealer_id', '=', $user_id)
+                ->where('approved_status', '=', 1)
+                ->groupBy('item_id')
+                ->orderBy('messaging.id', 'DESC')
+                ->select('messaging.*', 'users.dp', 'users.name')
+                ->get();
         }
-
-
     }
-
 
     function conversation($conversation = null){
 
@@ -863,6 +857,7 @@ class Trade_Your_CarController extends Controller
         $msg->item_id=$req->input('item_id');
         $msg->message=$req->input('message');
         $msg->sent_by=$req->input('sent_by');
+        $msg->approved_status = 1;
         $msg->save();
 
         // Send email notification
