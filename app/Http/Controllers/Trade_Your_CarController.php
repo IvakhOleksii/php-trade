@@ -817,8 +817,7 @@ class Trade_Your_CarController extends Controller
 
     function messaging_conversation($user_id = null, $user_type = null) {
         if ($user_type == 'owner') {
-            return DB::table('messaging')
-                ->join('users', 'users.id', '=', 'messaging.dealer_id')
+            return messaging::join('users', 'users.id', '=', 'messaging.dealer_id')
                 ->where('owner_id', '=', $user_id)
                 ->where('approved_status', '=', 1)
                 ->groupBy('item_id')
@@ -826,8 +825,7 @@ class Trade_Your_CarController extends Controller
                 ->select('messaging.*', 'users.dp', 'users.name')
                 ->get();
         } elseif ($user_type == 'dealer') {
-            return DB::table('messaging')
-                ->join('users', 'users.id', '=', 'messaging.owner_id')
+            return messaging::join('users', 'users.id', '=', 'messaging.owner_id')
                 ->where('dealer_id', '=', $user_id)
                 ->where('approved_status', '=', 1)
                 ->groupBy('item_id')
