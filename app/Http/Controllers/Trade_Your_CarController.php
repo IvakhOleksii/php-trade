@@ -785,35 +785,47 @@ class Trade_Your_CarController extends Controller
     }
 
 
-    function addBid(Request $req){
-        $bidsSelect = auction_bids::where('dealer_user_id', '=', $req->input('dealer_id'))->where('auction_item_id', '=', $req->input('item_id'))->first();
+    function addBid(Request $req) {
+        $auctionItemId = $req->input('item_id');
+        $dealerId = $req->input('dealer_id');
+        $query = auction_bids::where('dealer_user_id', '=', $dealerId)->where('auction_item_id', '=', $auctionItemId);
 
-        if ($bidsSelect === null) {
-            $bids = new auction_bids;
-            $bids->bid_price=$req->input('bid_amount');
-            $bids->dealer_user_id=$req->input('dealer_id');
-            $bids->auction_item_id=$req->input('item_id');
-            $bids->owner_user=$req->input('owner_id');
-            $bids->save();
-
-            // Send email notification
-            $owner = User::find($bids->owner_user);
-            $dealer = User::find($bids->dealer_user_id);
-            $auctionItem = trade_your_car::find($bids->auction_item_id);
-            $itemName = "{$auctionItem->make} {$auctionItem->model}, {$auctionItem->vin}";
-            Mail::to($owner)->send(new Bid(
-                $owner->name,
-                $dealer,
-                $itemName,
-                $bids->bid_price
-            ));
-
-            return response()->json(['message' => "OK", 'status' => '200'], 200);
-        } else {
-            return response()->json(['message' => "You have already bid on this item.", 'status' => '204'], 204);
+        if ($query->count() === 2) {
+            return response()->json(['message' => "You already have 2 bids on this item", 'status' => '400'], 400);
         }
-    }
 
+        // Get top bid
+        $topBid = auction_bids::where('auction_item_id', '=', $auctionItemId)
+            ->orderBy('bid_price', 'DESC')
+            ->first();
+        $totalCount = auction_bids::where('auction_item_id', '=', $auctionItemId)->count();
+
+        // Do not allow dealer to bid when they are the top bid
+        if ($topBid !== null && $totalCount > 1 && $topBid->dealer_user_id == $dealerId) {
+            return response()->json(['message' => "You already have top bid on this item", 'status' => '400'], 400);
+        }
+
+        $bids = new auction_bids;
+        $bids->bid_price=$req->input('bid_amount');
+        $bids->dealer_user_id=$req->input('dealer_id');
+        $bids->auction_item_id=$req->input('item_id');
+        $bids->owner_user=$req->input('owner_id');
+        $bids->save();
+
+        // Send email notification
+        $owner = User::find($bids->owner_user);
+        $dealer = User::find($bids->dealer_user_id);
+        $auctionItem = trade_your_car::find($bids->auction_item_id);
+        $itemName = "{$auctionItem->make} {$auctionItem->model}, {$auctionItem->vin}";
+        Mail::to($owner)->send(new Bid(
+            $owner->name,
+            $dealer,
+            $itemName,
+            $bids->bid_price
+        ));
+
+        return response()->json(['message' => "OK", 'status' => '200'], 200);
+    }
 
     function messaging_conversation($user_id = null, $user_type = null) {
         if ($user_type == 'owner') {
