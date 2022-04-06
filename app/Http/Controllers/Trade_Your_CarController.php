@@ -921,5 +921,12 @@ class Trade_Your_CarController extends Controller
             ->get();
     }
 
+    public function get_active_states(Request $req)
+    {
+        $now = date("Y-m-d H:i:s");
+        $query = trade_your_car::where('publish_status','!=','rejected')->where('expiry_at','>=',$now)->select('state')->distinct();
+        return $query->get();
+    }
+
 
 }
