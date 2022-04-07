@@ -103,43 +103,21 @@ class Trade_Your_CarController extends Controller
         $car->type=$req->input('type');
         $car->status="Pending";
         $car->publish_status=$req->input('publish_status');
-        $car->expiry_at=date("Y-m-d H:i:s", strtotime('+24 hours'));
-
-
-
-
-        //return response()->json(['message' => "OK", 'status' => '200'], 200);
-
-
-
-
-
+        $car->expiry_at=date("Y-m-d H:i:s", strtotime('+1 week'));
         if($req->input('id')){
-
-
-
          // Grab all the input passed in
           //return $req->input();
-  $data = $req->input();
-  $id = $req->input('id');
-  $gift = trade_your_car::find($id);
-  $gift->fill($data);
-  $gift->save();
-
-  $upMileage = trade_your_car::where('id', $id)->update(array('mileage' => $req->input('mileage')));
-  $sell_id = $id;
-
-
+           $data = $req->input();
+           $id = $req->input('id');
+           $gift = trade_your_car::find($id);
+           $gift->fill($data);
+           $gift->save();
+           $upMileage = trade_your_car::where('id', $id)->update(array('mileage' => $req->input('mileage')));
+           $sell_id = $id;
         }else{
             $car->save();
             $sell_id = $car->id;
-
-
         }
-
-
-
-
         $allowedfileExtension=['jpg','png','JPG','PNG','jpeg','JPEG'];
          /// starting front_Seats Image Upload
          if($req->hasFile('front_Seats')) {
