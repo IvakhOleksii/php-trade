@@ -473,7 +473,7 @@ class Trade_Your_CarController extends Controller
 
         //Query current auction results
         $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
-            $q->orderBy('bid_price', 'DESC');
+            $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
         }])->where('trade_your_car.publish_status','publish');
 
         //If not top bids set to acitve auctions
