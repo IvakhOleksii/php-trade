@@ -440,7 +440,9 @@ class Trade_Your_CarController extends Controller
         if(!$req->type || !$req->user_id) {
             return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
         }
-        $query = trade_your_car::with('get_images')->with('auction_bids')->where('type', $req->type)->where('publish_status','!=','rejected');
+        $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
+            $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
+        }])->where('type', $req->type)->where('publish_status','!=','rejected');
         if($req->bids) {
             $query = $query->has('auction_bids');
         }
@@ -459,13 +461,16 @@ class Trade_Your_CarController extends Controller
              $query = $query->where('expiry_at','>=',$now);
             }
           }
-        $start = $req->start ? $req->start : 0;
-        $limit = config('constants.pagination.items_per_page');
-        $return_obj['start'] = $start+$limit;
-        $return_obj['limit'] = $limit;
-        $return_obj['total'] = $query->count();
-        $return_obj['auctions'] = $query->orderBy('id', 'DESC')->skip($start)->take($limit)->get();
-        return $return_obj;
+
+        $start = $req->start ? intval($req->start) : 0;
+        $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
+
+        return array(
+            'start' => $start,
+            'limit' => $limit,
+            'total' => $query->count(),
+            'auctions' => $query->orderBy('id', 'DESC')->skip($start)->take($limit)->get()
+        );
     }
     public function list_dealer(Request $req)
     {
