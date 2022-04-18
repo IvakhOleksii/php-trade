@@ -479,13 +479,9 @@ class Trade_Your_CarController extends Controller
         //Query current auction results
         $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
             $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
-        }])->where('trade_your_car.publish_status','publish');
+        }])->where('trade_your_car.publish_status','publish')->where('trade_your_car.expiry_at', '>=', $now);
 
-        //If not top bids set to acitve auctions
-        if(!$req->top_bids) {
-            $query = $query->where('trade_your_car.expiry_at', '>=', $now);
-        }
-        if(($req->current_bids || $req->top_bids) && !$req->dealer_id) {
+        if($req->current_bids && !$req->dealer_id) {
             return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
         }
         //Published and currently has a bid by this user
@@ -502,13 +498,6 @@ class Trade_Your_CarController extends Controller
         if($req->model) {
             $query->where('trade_your_car.model',$req->model);
         }
-         //Not published and top bid
-         //TODO Fix this for load more pagination
-        if($req->top_bids) {
-            return $query->whereHas('auction_bids_maxprice', function($q) use ($req) {
-                $q->where('dealer_user_id', $req->dealer_id);
-            })->orderBy('trade_your_car.id', 'DESC')->get();
-        }
 
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
@@ -518,6 +507,33 @@ class Trade_Your_CarController extends Controller
             'limit' => $limit,
             'total' => $query->count(),
             'auctions' => $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->get()
+        );
+    }
+
+    public function list_dealer_top(Request $req)
+    {
+        if (!$req->dealer_id) {
+            return response()->json(['error' => 'Bad request', 'status' => '400'], 400);
+        }
+
+        $query = trade_your_car::with('get_images')
+            ->with(['auction_bids' => function ($q) {
+                $q->orderBy('bid_price', 'DESC');
+            }])
+            ->where('trade_your_car.publish_status', 'publish')
+            ->whereHas('auction_bid_with_max_price', function($q) use ($req) {
+                $q->where('dealer_user_id', $req->dealer_id);
+            })
+            ->orderBy('trade_your_car.id', 'DESC');
+        
+        $start = $req->start ? intval($req->start) : 0;
+        $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
+
+        return array(
+            'start' => $start,
+            'limit' => $limit,
+            'total' => $query->count(),
+            'auctions' => $query->skip($start)->take($limit)->get()
         );
     }
 
