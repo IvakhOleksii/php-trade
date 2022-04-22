@@ -12,8 +12,6 @@ use App\Mail\Registration;
 
 use Illuminate\Support\Facades\Hash;
 
-use Illuminate\Validation\Validator;
-
 use GuzzleHttp\Client;
 
 use Illuminate\Support\Facades\Http;
@@ -21,6 +19,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -54,97 +53,97 @@ class UserController extends Controller
 
         $userss = User::where('email', '=', $req->input('email'))->first();
         if ($userss === null) {
-
-                    $allowedfileExtension=['jpg','png','PNG','JPG','jpeg','JPEG'];
-
-
-                                    /// starting dp Upload
-                                    $name = '';
-                                    $url = '';
-                                if($req->hasFile('dealer_image')) {
-                                    // return response()->json(['message' => "OK", 'status' => '200'], 200);
+            $allowedfileExtension=['jpg','png','PNG','JPG','jpeg','JPEG'];
 
 
-                                                $files = $req->file('dealer_image');
+            /// starting dp Upload
+            $name = '';
+            $url = '';
+            if($req->hasFile('dealer_image')) {
+                // return response()->json(['message' => "OK", 'status' => '200'], 200);
+                $files = $req->file('dealer_image');
 
-                                                foreach ($files as $file) {
-                                                    $extension = $file->getClientOriginalExtension();
+                foreach ($files as $file) {
+                    $extension = $file->getClientOriginalExtension();
 
-                                                    $check = in_array($extension,$allowedfileExtension);
+                    $check = in_array($extension,$allowedfileExtension);
 
-                                                    if($check) {
-                                                        foreach($req->dealer_image as $mediaFiles) {
+                    if($check) {
+                        foreach($req->dealer_image as $mediaFiles) {
 
-                                                            $url = $mediaFiles->store('public/images/');
-                                                            $name = $mediaFiles->getClientOriginalName();
+                            $url = $mediaFiles->store('public/images/');
+                            $name = $mediaFiles->getClientOriginalName();
 
-                                                            //store image file into directory and db
-                                                            $file_name = str_replace("public/images/","",$url);
-                                                            $user->dp = $file_name;
-                                                        }
-                                                    } else {
-                                                        return response()->json(['invalid_file_format'], 422);
-                                                    }
+                            //store image file into directory and db
+                            $file_name = str_replace("public/images/","",$url);
+                            $user->dp = $file_name;
+                        }
+                    } else {
+                        return response()->json(['invalid_file_format'], 422);
+                    }
 
-                                                    //return response()->json(['file_uploaded'], 200);
+                    //return response()->json(['file_uploaded'], 200);
+                }
 
-                                                }
-
-                                        }
-                                         /// ending dp Upload
-
-
-                                        /// starting Image Upload
-                                        $name = '';
-                                        $url = '';
-                                    if($req->hasFile('license')) {
-                                        // return response()->json(['message' => "OK", 'status' => '200'], 200);
-
-                                                    $files = $req->file('license');
-
-                                                    foreach ($files as $file) {
-                                                        $extension = $file->getClientOriginalExtension();
-
-                                                        $check = in_array($extension,$allowedfileExtension);
-
-                                                        if($check) {
-                                                            foreach($req->license as $mediaFiles) {
-
-                                                                $url = $mediaFiles->store('public/images/');
-                                                                $name = $mediaFiles->getClientOriginalName();
-
-                                                                //store image file into directory and db
-                                                                $file_name = str_replace("public/images/","",$url);
-                                                                //$user->license = $name;
-                                                                $user->dealer_licence = $file_name;
-                                                            }
-                                                        } else {
-                                                            return response()->json(['invalid_file_format'], 422);
-                                                        }
-
-                                                        //return response()->json(['file_uploaded'], 200);
-
-                                                    }
-
-                                            }
-                                             /// ending Image Upload
-
-                                        $user->save();
-
-                                        // Send email notification
-                                        Mail::to($user)->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer"));
-
-                                        $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
-                                        "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
+            }
+            /// ending dp Upload
 
 
-                                        return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
+            /// starting Image Upload
+            $name = '';
+            $url = '';
+            if($req->hasFile('license')) {
+                // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
+                $files = $req->file('license');
+
+                foreach ($files as $file) {
+                    $extension = $file->getClientOriginalExtension();
+
+                    $check = in_array($extension,$allowedfileExtension);
+
+                    if($check) {
+                        foreach($req->license as $mediaFiles) {
+
+                            $url = $mediaFiles->store('public/images/');
+                            $name = $mediaFiles->getClientOriginalName();
+
+                            //store image file into directory and db
+                            $file_name = str_replace("public/images/","",$url);
+                            //$user->license = $name;
+                            $user->dealer_licence = $file_name;
+                        }
+                    } else {
+                        return response()->json(['invalid_file_format'], 422);
+                    }
+
+                    //return response()->json(['file_uploaded'], 200);
+
+                }
+
+            }
+            /// ending Image Upload
+
+            $user->save();
+
+            // Send email notification
+            Mail::to($user)->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer"));
+
+            $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
+            "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
+
+            // Create JWT token
+            $token = auth()->tokenById($user->id);
+
+            return response()->json([
+                'message' => "OK",
+                'data' => $user_data,
+                'token' => $token,
+                'status' => '200'
+            ], 200);
         } else {
             return response()->json(['error' => 'Exist', 'status' => '300'], 300);
         }
-
-
     }
 
     function contact(Request $req){
@@ -167,27 +166,19 @@ class UserController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            $user =User::where('email',$request->email)->first();
-            $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealerName"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "zip_code"=>$user->zip_code, "Licence"=>$user->dealer_licence, "dealer_image"=>$user->dp);
-            return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
-        }
-        else {
+        if (!$token = auth()->attempt($credentials)) {
             return response()->json(['error' => 'WrongCredentials', 'status' => '320'], 320);
         }
-           /*
-            $user =User::where('email',$req->email)->first();
-            $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealerName"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$user->dealer_licence, "dealer_image"=>$user->dp);
-            if(!$user || !Hash::check($req->password,$user->password))
-            {
-                $req->session()->regenerate();
-                return response()->json(['error' => 'WrongCredentials', 'status' => '320'], 320);
-            }
-                return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
-           */
-    }
 
+        $user =User::where('email',$request->email)->first();
+        $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealerName"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "zip_code"=>$user->zip_code, "Licence"=>$user->dealer_licence, "dealer_image"=>$user->dp);
+        return response()->json([
+            'message' => "OK",
+            'data' => $user_data,
+            'token' => $token,
+            'status' => '200'
+        ], 200);
+    }
 
     function forgetPass(Request $req)
     {
@@ -204,8 +195,8 @@ class UserController extends Controller
 
     public function update(Request $request)
     {
-        //return $request->input(); exit;
-        $user_id = $request->input('id');
+        $user = auth()->user();
+
         $fname = $request->input('name');
         $email = $request->input('email');
         $user_type = $request->input('user_type');
@@ -221,87 +212,111 @@ class UserController extends Controller
          $url = '';
          $allowedfileExtension=['jpg','png','PNG','JPG','jpeg','JPEG'];
 
-
          if($request->hasFile('dealer_licence')) {
             // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
 
-                        $files = $request->file('dealer_licence');
+            $files = $request->file('dealer_licence');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($request->dealer_licence as $mediaFiles) {
+                if($check) {
+                    foreach($request->dealer_licence as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
 
-                                    //store image file into directory and db
-                                    $file_name = str_replace("public/images/","",$url);
-                                    $userdp = User::where('id', $user_id)->update(array('dealer_licence' => $file_name));
-                                }
-                            } else {
-                                return response()->json(['invalid_file_format'], 422);
-                            }
-
-                            //return response()->json(['file_uploaded'], 200);
-
-                        }
-
+                        //store image file into directory and db
+                        $file_name = str_replace("public/images/","",$url);
+                        $userdp = $user->update(array('dealer_licence' => $file_name));
+                    }
+                } else {
+                    return response()->json(['message' => 'invalid_file_format', 'status' => '422'], 422);
                 }
-                 /// ending licence Upload
+
+                //return response()->json(['file_uploaded'], 200);
+
+            }
+
+        }
+        /// ending licence Upload
 
 
 
 
 
 
-     if($request->hasFile('dealer_image')) {
-         // return response()->json(['message' => "OK", 'status' => '200'], 200);
+        if($request->hasFile('dealer_image')) {
+        // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
 
-                     $files = $request->file('dealer_image');
+            $files = $request->file('dealer_image');
 
-                     foreach ($files as $file) {
-                         $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                         $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                         if($check) {
-                             foreach($request->dealer_image as $mediaFiles) {
+                if($check) {
+                    foreach($request->dealer_image as $mediaFiles) {
 
-                                 $url = $mediaFiles->store('public/images/');
-                                 $name = $mediaFiles->getClientOriginalName();
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
 
-                                 //store image file into directory and db
-                                 $file_name = str_replace("public/images/","",$url);
-                                 $userdp = User::where('id', $user_id)->update(array('dp' => $file_name));
-                             }
-                         } else {
-                             return response()->json(['invalid_file_format'], 422);
-                         }
+                        //store image file into directory and db
+                        $file_name = str_replace("public/images/","",$url);
+                        $userdp = $user->update(array('dp' => $file_name));
+                    }
+                } else {
+                    return response()->json(['invalid_file_format'], 422);
+                }
 
-                         //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                     }
+            }
 
-             }
-              /// ending dp Upload
+        }
+        /// ending dp Upload
 
+        $user->update(array(
+            'car_make' => $car_make,
+            'name' => $fname,
+            'email' => $email,
+            'user_type' => $user_type,
+            'state' => $state,
+            'city' => $city,
+            'address' => $address,
+            'phone' => $phone,
+            'dealername' => $dealername,
+            'companywebsite' => $companywebsite,
+            'zip_code' => $zip_code
+        ));
 
+        $user_data = array(
+            "id"=>$user->id,
+            "name"=>$user->name,
+            "email"=>$user->email,
+            "user_type"=>$user->user_type,
+            "state"=>$user->state,
+            "city"=>$user->city,
+            "address"=>$user->address,
+            "phone"=>$user->phone,
+            "dealername"=>$user->dealername,
+            "companywebsite"=>$user->companywebsite,
+            "car_make"=>$user->car_make,
+            "Licence"=>$user->dealer_licence,
+            "dealer_image"=>$user->dp,
+            "zip_code"=>$user->zip_code
+        );
 
-
-
-       $userP = User::where('id', $user_id)->update(array('car_make' => $car_make,'name' => $fname,'email' => $email,'user_type' => $user_type,'state' => $state,'city' => $city,'address' => $address,'phone' => $phone,'dealername' => $dealername,'companywebsite' => $companywebsite, 'zip_code' => $zip_code));
-
-        $user =User::where('id',$user_id)->first();
-        $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealername"=>$user->dealername, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$user->dealer_licence, "dealer_image"=>$user->dp, "zip_code"=>$user->zip_code);
-
-        return response()->json(['message' => "OK", 'data' => $user_data, 'status' => '200'], 200);
-
+        return response()->json([
+            'message' => "OK",
+            'data' => $user_data,
+            'status' => '200'
+        ], 200);
     }
 
     public function checkVin(Request $request) {
@@ -310,38 +325,31 @@ class UserController extends Controller
         return json_encode(['message' => 'success', 'data' => $res->json()]);
     }
 
-
     public function resetPassword(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|string',
+            'newpassword' => 'required|string|min:6',
+        ]);
 
-        $user =User::where('id',$request->id)->first();
-
-        if(!$user || !Hash::check($request->password,$user->password))
-        {
-            return response()->json(['error' => 'Wrong Old Password', 'status' => '320'], 320);
-        }else{
-
-
-            if($request->newpassword){
-            $updated_password = Hash::make($request->newpassword);
-
-            $userdp = User::where('id', $request->id)->update(array('password' => $updated_password));
-
-            return response()->json(['Message' => 'Password Updated', 'status' => '200'], 200);
-
-            }else{
-
-                return response()->json(['error' => 'Please enter new password', 'status' => '320'], 320);
-            }
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->messages(), 'status' => '400'], 400);
         }
 
+        $user = auth()->user();
 
+        if (!Hash::check($request->password, $user->password))
+        {
+            return response()->json(['error' => 'Wrong Old Password', 'status' => '320'], 320);
+        } else {
+            $updated_password = Hash::make($request->newpassword);
+            $user->update(['password' => $updated_password]);
+            return response()->json(['message' => 'Password Updated', 'status' => '200'], 200);
+        }
     }
 
     public function logout(Request $request) {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return response()->json(['Message' => 'User Logged out', 'status' => '200'], 200);
+        auth()->logout();
+        return response()->json(['message' => 'User Logged out', 'status' => '200'], 200);
     }
 
 }
