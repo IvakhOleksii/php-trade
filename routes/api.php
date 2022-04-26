@@ -55,7 +55,7 @@ Route::group([
     Route::post('/bidstatus', [Trade_Your_CarController::class, 'BidStatus']);
     Route::post('/addbid', [Trade_Your_CarController::class, 'addBid']);
     Route::post('/car_list', [Trade_Your_CarController::class, 'listAll']);
-    Route::get('/messaging_conversation/{user_id?}/{user_type?}', [Trade_Your_CarController::class, 'messaging_conversation']);
+    Route::get('/messaging_conversation', [Trade_Your_CarController::class, 'messaging_conversation']);
     Route::get('/conversation/{conversation?}', [Trade_Your_CarController::class, 'conversation']);
     Route::post('/addmessaging', [Trade_Your_CarController::class, 'addMessaging']);
 
