@@ -71,6 +71,8 @@ class Kernel extends HttpKernel
         'cors' => \App\Http\Middleware\Cors::class,
         'jwt.verify' => \App\Http\Middleware\JwtMiddleware::class,
         'jwt.auth' => 'Tymon\JWTAuth\Middleware\GetUserFromToken',
-        'jwt.refresh' => 'Tymon\JWTAuth\Middleware\RefreshToken'
+        'jwt.refresh' => 'Tymon\JWTAuth\Middleware\RefreshToken',
+        'owner' => \App\Http\Middleware\CarOwnerOnly::class,
+        'dealer' => \App\Http\Middleware\CarDealerOnly::class,
     ];
 }
