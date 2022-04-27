@@ -521,7 +521,7 @@ class Trade_Your_CarController extends Controller
                 $q->where('dealer_user_id', $dealerId);
             })
             ->orderBy('trade_your_car.id', 'DESC');
-        
+
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
 
@@ -856,6 +856,13 @@ class Trade_Your_CarController extends Controller
         $now = date("Y-m-d H:i:s");
         $query = trade_your_car::where('publish_status','!=','rejected')->where('expiry_at','>=',$now)->select('state')->distinct();
         return $query->get();
+    }
+
+    public function getZipCodesByRadius($zip_code, $radius)
+    {
+        $url = config('constants.zipcode_api.base_url').$zip_code."/".$radius."/mile";
+        $res = Http::get($url);
+        return $res;
     }
 
 
