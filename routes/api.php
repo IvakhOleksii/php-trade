@@ -33,12 +33,17 @@ Route::post('/contact_us', [UserController::class, 'contact']);
 
 Route::group([
     'middleware' => 'jwt.verify'
-], function ($router) {
+], function () {
+    Route::group([
+        'middleware' => 'owner'
+    ], function () {
+        Route::post('/sell_your_car', [Sell_Your_CarController::class, 'add']);
+        Route::post('/trade_your_car', [Trade_Your_CarController::class, 'add']);
+    });
+
     Route::post('/resetpassword', [UserController::class, 'resetPassword']);
     Route::post('/update_user', [UserController::class, 'update']);
     Route::post('/logout', [UserController::class, 'logout']);
-    Route::post('/sell_your_car', [Sell_Your_CarController::class, 'add']);
-    Route::post('/trade_your_car', [Trade_Your_CarController::class, 'add']);
     Route::get('/trade_your_car_list', [Trade_Your_CarController::class, 'list']);
     Route::get('/sell_your_car_list', [Trade_Your_CarController::class, 'listSell']);
     Route::get('/list_auction_owner', [Trade_Your_CarController::class, 'list_owner']);
@@ -53,7 +58,13 @@ Route::group([
     Route::get('/bidsell/{user_id?}', [Trade_Your_CarController::class, 'bidSell']);
     Route::get('/bidtrade/{user_id?}', [Trade_Your_CarController::class, 'bidTrade']);
     Route::post('/bidstatus', [Trade_Your_CarController::class, 'BidStatus']);
-    Route::post('/addbid', [Trade_Your_CarController::class, 'addBid']);
+
+    Route::group([
+        'middleware' => 'dealer'
+    ], function () {
+        Route::post('/addbid', [Trade_Your_CarController::class, 'addBid']);
+    });
+
     Route::post('/car_list', [Trade_Your_CarController::class, 'listAll']);
     Route::get('/messaging_conversation', [Trade_Your_CarController::class, 'messaging_conversation']);
     Route::get('/conversation/{conversation?}', [Trade_Your_CarController::class, 'conversation']);
