@@ -490,12 +490,16 @@ class Trade_Your_CarController extends Controller
             });
         }
         //Check for Car Make
-        if($req->make) {
-            $query->where('trade_your_car.make',$req->make);
+        if ($req->make) {
+            $query->where('trade_your_car.make', $req->make);
         }
         //Check for Car Model
-        if($req->model) {
-            $query->where('trade_your_car.model',$req->model);
+        if ($req->model) {
+            $query->where('trade_your_car.model', $req->model);
+        }
+
+        if ($req->state) {
+            $query->where('trade_your_car.state', $req->state);
         }
 
         $start = $req->start ? intval($req->start) : 0;
