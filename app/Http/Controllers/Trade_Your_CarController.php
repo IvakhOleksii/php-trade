@@ -476,6 +476,7 @@ class Trade_Your_CarController extends Controller
     public function list_dealer(Request $req)
     {
         $now = date("Y-m-d H:i:s");
+        $authUser = auth()->user();
 
         //Query current auction results
         $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
@@ -484,18 +485,20 @@ class Trade_Your_CarController extends Controller
 
         //Published and currently has a bid by this user
         if ($req->current_bids) {
-            $dealerId = auth()->user()->id;
+            $dealerId = $authUser->id;
             $query = $query->whereHas('auction_bids', function($query) use ($dealerId) {
                 $query->where('dealer_user_id', $dealerId);
             });
         }
         //Check for Car Make
         if ($req->make) {
-            $query->where('trade_your_car.make', $req->make);
+            $make = strtolower($req->make);
+            $query->whereRaw('LOWER(trade_your_car.make) LIKE ?', ["%$make%"]);
         }
         //Check for Car Model
         if ($req->model) {
-            $query->where('trade_your_car.model', $req->model);
+            $model = strtolower($req->model);
+            $query->whereRaw('LOWER(trade_your_car.model) LIKE ?', ["%$model%"]);
         }
 
         if ($req->state) {
@@ -509,7 +512,7 @@ class Trade_Your_CarController extends Controller
             'start' => $start,
             'limit' => $limit,
             'total' => $query->count(),
-            'auctions' => $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->get()
+            'auctions' => $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->select('trade_your_car.*')->get()
         );
     }
 
