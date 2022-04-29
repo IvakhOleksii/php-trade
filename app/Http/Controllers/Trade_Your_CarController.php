@@ -505,6 +505,28 @@ class Trade_Your_CarController extends Controller
             $query->where('trade_your_car.state', $req->state);
         }
 
+        if ($req->proximity == "1" && $authUser->zip_code) {
+            $zipCodesResponse = $this->getZipCodesByRadius($authUser->zip_code, 500);
+            $zipCodes = $zipCodesResponse->json('zip_codes');
+            $query->where(function ($qry) use ($zipCodes) {
+                foreach ($zipCodes as $key => $zipCode) {
+                    if ($key == 0) {
+                        $qry->where(function ($q) use ($zipCode) {
+                            $q->where('zip', $zipCode['zip_code'])
+                                ->whereRaw('radius IS NOT NULL')
+                                ->where('radius', '>=', $zipCode['distance']);
+                        });
+                    } else {
+                        $qry->orWhere(function ($q) use ($zipCode) {
+                            $q->where('zip', $zipCode['zip_code'])
+                                ->whereRaw('radius IS NOT NULL')
+                                ->where('radius', '>=', $zipCode['distance']);
+                        });
+                    }
+                }
+            });
+        }
+
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
 
