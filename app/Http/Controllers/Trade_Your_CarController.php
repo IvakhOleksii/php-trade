@@ -508,23 +508,15 @@ class Trade_Your_CarController extends Controller
         if ($req->proximity == "1" && $authUser->zip_code) {
             $zipCodesResponse = $this->getZipCodesByRadius($authUser->zip_code, 500);
             $zipCodes = $zipCodesResponse->json('zip_codes');
-            $query->where(function ($qry) use ($zipCodes) {
-                foreach ($zipCodes as $key => $zipCode) {
-                    if ($key == 0) {
-                        $qry->where(function ($q) use ($zipCode) {
-                            $q->where('zip', $zipCode['zip_code'])
-                                ->whereRaw('radius IS NOT NULL')
-                                ->where('radius', '>=', $zipCode['distance']);
-                        });
-                    } else {
-                        $qry->orWhere(function ($q) use ($zipCode) {
-                            $q->where('zip', $zipCode['zip_code'])
-                                ->whereRaw('radius IS NOT NULL')
-                                ->where('radius', '>=', $zipCode['distance']);
-                        });
-                    }
+            $zips = "[";
+            foreach ($zipCodes as $key => $zipCode) {
+                if ($key > 0) {
+                    $zips .= ",";
                 }
-            });
+                $zips .= "{\"zip_code\":\"{$zipCode['zip_code']}\",\"distance\":{$zipCode['distance']}}";
+            }
+            $zips .= "]";
+            $query->join(DB::raw("json_table('$zips', \"$[*]\" columns(zip_code varchar(10) path \"$.zip_code\", distance int path \"$.distance\")) t1"), 't1.zip_code', 'trade_your_car.zip')->whereRaw('trade_your_car.radius IS NOT NULL')->whereColumn('t1.distance', '<=', 'trade_your_car.radius');
         }
 
         $start = $req->start ? intval($req->start) : 0;
