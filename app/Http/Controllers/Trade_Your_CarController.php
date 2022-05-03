@@ -33,6 +33,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
 
 use DB;
 use PhpParser\Node\Expr\Cast\Object_;
@@ -506,8 +507,7 @@ class Trade_Your_CarController extends Controller
         }
 
         if ($req->proximity == "1" && $authUser->zip_code) {
-            $zipCodesResponse = $this->getZipCodesByRadius($authUser->zip_code, 500);
-            $zipCodes = $zipCodesResponse->json('zip_codes');
+            $zipCodes = $this->getZipCodesByRadius($authUser->zip_code, 500);
             $zips = "[";
             foreach ($zipCodes as $key => $zipCode) {
                 if ($key > 0) {
@@ -516,7 +516,7 @@ class Trade_Your_CarController extends Controller
                 $zips .= "{\"zip_code\":\"{$zipCode['zip_code']}\",\"distance\":{$zipCode['distance']}}";
             }
             $zips .= "]";
-            $query->join(DB::raw("json_table('$zips', \"$[*]\" columns(zip_code varchar(10) path \"$.zip_code\", distance int path \"$.distance\")) t1"), 't1.zip_code', 'trade_your_car.zip')->whereRaw('trade_your_car.radius IS NOT NULL')->whereColumn('t1.distance', '<=', 'trade_your_car.radius');
+            $query->join(DB::raw("json_table('$zips', \"$[*]\" columns(zip_code varchar(10) path \"$.zip_code\", distance int path \"$.distance\")) zipcodes"), 'zipcodes.zip_code', 'trade_your_car.zip')->whereRaw('trade_your_car.radius IS NOT NULL')->whereColumn('zipcodes.distance', '<=', 'trade_your_car.radius');
         }
 
         $start = $req->start ? intval($req->start) : 0;
@@ -881,9 +881,15 @@ class Trade_Your_CarController extends Controller
 
     public function getZipCodesByRadius($zip_code, $radius)
     {
-        $url = config('constants.zipcode_api.base_url').$zip_code."/".$radius."/mile";
+        $key = "$zip_code/$radius/mile";
+        if (Cache::has($key)) {
+            return Cache::get($key);
+        }
+        $url = config('constants.zipcode_api.base_url') . $key;
         $res = Http::get($url);
-        return $res;
+        $zipCodes = $res->json('zip_codes');
+        Cache::forever($key, $zipCodes);
+        return $zipCodes;
     }
 
 
