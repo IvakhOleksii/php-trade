@@ -33,6 +33,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
 
 use DB;
 use PhpParser\Node\Expr\Cast\Object_;
@@ -54,7 +55,7 @@ class Trade_Your_CarController extends Controller
         $car->make=$req->input('make');
         $car->model=$req->input('model');
         $car->color=$req->input('color');
-        $car->user_id=$req->input('user_id');
+        $car->user_id=auth()->user()->id;
         $car->body_type=$req->input('body_type');
         $car->condition=$req->input('condition');
         $car->exterior_color=$req->input('exterior_color');
@@ -409,7 +410,7 @@ class Trade_Your_CarController extends Controller
 
         // Check draft or published and send email notification if published
         if ($car->publish_status && $car->publish_status != "draft") {
-            $user = User::find($car->user_id);
+            $user = auth()->user();
             Mail::to($user)->send(new Auction(
                 $user->name,
                 $car->publish_status,
@@ -437,7 +438,7 @@ class Trade_Your_CarController extends Controller
     {
         $now = date("Y-m-d H:i:s");
         //Check for type error
-        if(!$req->type || !$req->user_id) {
+        if(!$req->type) {
             return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
         }
         $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
@@ -447,7 +448,8 @@ class Trade_Your_CarController extends Controller
             $query = $query->has('auction_bids');
         }
 
-        $query = $query->where('user_id',$req->user_id);
+        $userId = auth()->user()->id;
+        $query = $query->where('user_id', $userId);
         //Check for draft or published
          if($req->publish_status) {
             $query = $query->where('publish_status',$req->publish_status);
@@ -475,28 +477,46 @@ class Trade_Your_CarController extends Controller
     public function list_dealer(Request $req)
     {
         $now = date("Y-m-d H:i:s");
+        $authUser = auth()->user();
 
         //Query current auction results
         $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
             $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
         }])->where('trade_your_car.publish_status','publish')->where('trade_your_car.expiry_at', '>=', $now);
 
-        if($req->current_bids && !$req->dealer_id) {
-            return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
-        }
         //Published and currently has a bid by this user
         if ($req->current_bids) {
-              $query = $query->whereHas('auction_bids', function($query) use ($req) {
-                $query->where('dealer_user_id', $req->dealer_id);
-             });
+            $dealerId = $authUser->id;
+            $query = $query->whereHas('auction_bids', function($query) use ($dealerId) {
+                $query->where('dealer_user_id', $dealerId);
+            });
         }
         //Check for Car Make
-        if($req->make) {
-            $query->where('trade_your_car.make',$req->make);
+        if ($req->make) {
+            $make = strtolower($req->make);
+            $query->whereRaw('LOWER(trade_your_car.make) LIKE ?', ["%$make%"]);
         }
         //Check for Car Model
-        if($req->model) {
-            $query->where('trade_your_car.model',$req->model);
+        if ($req->model) {
+            $model = strtolower($req->model);
+            $query->whereRaw('LOWER(trade_your_car.model) LIKE ?', ["%$model%"]);
+        }
+
+        if ($req->state) {
+            $query->where('trade_your_car.state', $req->state);
+        }
+
+        if ($req->proximity == "1" && $authUser->zip_code) {
+            $zipCodes = $this->getZipCodesByRadius($authUser->zip_code, 500);
+            $zips = "[";
+            foreach ($zipCodes as $key => $zipCode) {
+                if ($key > 0) {
+                    $zips .= ",";
+                }
+                $zips .= "{\"zip_code\":\"{$zipCode['zip_code']}\",\"distance\":{$zipCode['distance']}}";
+            }
+            $zips .= "]";
+            $query->join(DB::raw("json_table('$zips', \"$[*]\" columns(zip_code varchar(10) path \"$.zip_code\", distance int path \"$.distance\")) zipcodes"), 'zipcodes.zip_code', 'trade_your_car.zip')->whereRaw('trade_your_car.radius IS NOT NULL')->whereColumn('zipcodes.distance', '<=', 'trade_your_car.radius');
         }
 
         $start = $req->start ? intval($req->start) : 0;
@@ -506,23 +526,20 @@ class Trade_Your_CarController extends Controller
             'start' => $start,
             'limit' => $limit,
             'total' => $query->count(),
-            'auctions' => $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->get()
+            'auctions' => $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->select('trade_your_car.*')->get()
         );
     }
 
     public function list_dealer_top(Request $req)
     {
-        if (!$req->dealer_id) {
-            return response()->json(['error' => 'Bad request', 'status' => '400'], 400);
-        }
-
+        $dealerId = auth()->user()->id;
         $query = trade_your_car::with('get_images')
             ->with(['auction_bids' => function ($q) {
                 $q->orderBy('bid_price', 'DESC');
             }])
             ->where('trade_your_car.publish_status', 'publish')
-            ->whereHas('auction_bid_with_max_price', function($q) use ($req) {
-                $q->where('dealer_user_id', $req->dealer_id);
+            ->whereHas('auction_bid_with_max_price', function($q) use ($dealerId) {
+                $q->where('dealer_user_id', $dealerId);
             })
             ->orderBy('trade_your_car.id', 'DESC');
 
@@ -541,8 +558,9 @@ class Trade_Your_CarController extends Controller
     {
         $query = trade_your_car::with('get_images')->where('type', 'sell');
         //Car owner
-        if($req->user_id && $req->user_type == 'Car Owner') {
-            $query = $query->where('user_id',$req->user_id);
+        $user = auth()->user();
+        if($user->user_type == 'Car Owner') {
+            $query = $query->where('user_id', $user->id);
             //Check for draft or published
             if($req->publish_status) {
                 $query = $query->where('publish_status',$req->publish_status);
@@ -577,10 +595,75 @@ class Trade_Your_CarController extends Controller
 
 
         if($filter == ''){
-        return auction_bids::with('get_images')->where('auction_bids.approved_status', '=', $bid_status)->join('trade_your_car', 'trade_your_car.id', '=', 'auction_bids.auction_item_id')->get();
+            return auction_bids::with('get_images')->where('auction_bids.approved_status', '=', $bid_status)->join('trade_your_car', 'trade_your_car.id', '=', 'auction_bids.auction_item_id')->get();
         }else{
             return auction_bids::with('get_images')->where('auction_bids.approved_status', '=', $bid_status)->where('type', '=', $filter)->join('trade_your_car', 'trade_your_car.id', '=', 'auction_bids.auction_item_id')->get();
         }
+    }
+
+    private function ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
+        $output = NULL;
+        if (filter_var($ip, FILTER_VALIDATE_IP) === FALSE) {
+            $ip = $_SERVER["REMOTE_ADDR"];
+            if ($deep_detect) {
+                if (filter_var(@$_SERVER['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP))
+                    $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+                if (filter_var(@$_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP))
+                    $ip = $_SERVER['HTTP_CLIENT_IP'];
+            }
+        }
+        $purpose    = str_replace(array("name", "\n", "\t", " ", "-", "_"), NULL, strtolower(trim($purpose)));
+        $support    = array("country", "countrycode", "state", "region", "city", "location", "address");
+        $continents = array(
+            "AF" => "Africa",
+            "AN" => "Antarctica",
+            "AS" => "Asia",
+            "EU" => "Europe",
+            "OC" => "Australia (Oceania)",
+            "NA" => "North America",
+            "SA" => "South America"
+        );
+        if (filter_var($ip, FILTER_VALIDATE_IP) && in_array($purpose, $support)) {
+            $ipdat = @json_decode(file_get_contents("http://www.geoplugin.net/json.gp?ip=" . $ip));
+            if (@strlen(trim($ipdat->geoplugin_countryCode)) == 2) {
+                switch ($purpose) {
+                    case "location":
+                        $output = array(
+                            "city"           => @$ipdat->geoplugin_city,
+                            "state"          => @$ipdat->geoplugin_regionName,
+                            "country"        => @$ipdat->geoplugin_countryName,
+                            "country_code"   => @$ipdat->geoplugin_countryCode,
+                            "continent"      => @$continents[strtoupper($ipdat->geoplugin_continentCode)],
+                            "continent_code" => @$ipdat->geoplugin_continentCode
+                        );
+                        break;
+                    case "address":
+                        $address = array($ipdat->geoplugin_countryName);
+                        if (@strlen($ipdat->geoplugin_regionName) >= 1)
+                            $address[] = $ipdat->geoplugin_regionName;
+                        if (@strlen($ipdat->geoplugin_city) >= 1)
+                            $address[] = $ipdat->geoplugin_city;
+                        $output = implode(", ", array_reverse($address));
+                        break;
+                    case "city":
+                        $output = @$ipdat->geoplugin_city;
+                        break;
+                    case "state":
+                        $output = @$ipdat->geoplugin_regionName;
+                        break;
+                    case "region":
+                        $output = @$ipdat->geoplugin_regionName;
+                        break;
+                    case "country":
+                        $output = @$ipdat->geoplugin_countryName;
+                        break;
+                    case "countrycode":
+                        $output = @$ipdat->geoplugin_countryCode;
+                        break;
+                }
+            }
+        }
+        return $output;
     }
 
     public function listAll(Request $req)
@@ -588,90 +671,23 @@ class Trade_Your_CarController extends Controller
         $make = $req->input('make');
         $model = $req->input('model');
 
-
-
-      function ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
-    $output = NULL;
-    if (filter_var($ip, FILTER_VALIDATE_IP) === FALSE) {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        if ($deep_detect) {
-            if (filter_var(@$_SERVER['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP))
-                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-            if (filter_var(@$_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP))
-                $ip = $_SERVER['HTTP_CLIENT_IP'];
-        }
-    }
-    $purpose    = str_replace(array("name", "\n", "\t", " ", "-", "_"), NULL, strtolower(trim($purpose)));
-    $support    = array("country", "countrycode", "state", "region", "city", "location", "address");
-    $continents = array(
-        "AF" => "Africa",
-        "AN" => "Antarctica",
-        "AS" => "Asia",
-        "EU" => "Europe",
-        "OC" => "Australia (Oceania)",
-        "NA" => "North America",
-        "SA" => "South America"
-    );
-    if (filter_var($ip, FILTER_VALIDATE_IP) && in_array($purpose, $support)) {
-        $ipdat = @json_decode(file_get_contents("http://www.geoplugin.net/json.gp?ip=" . $ip));
-        if (@strlen(trim($ipdat->geoplugin_countryCode)) == 2) {
-            switch ($purpose) {
-                case "location":
-                    $output = array(
-                        "city"           => @$ipdat->geoplugin_city,
-                        "state"          => @$ipdat->geoplugin_regionName,
-                        "country"        => @$ipdat->geoplugin_countryName,
-                        "country_code"   => @$ipdat->geoplugin_countryCode,
-                        "continent"      => @$continents[strtoupper($ipdat->geoplugin_continentCode)],
-                        "continent_code" => @$ipdat->geoplugin_continentCode
-                    );
-                    break;
-                case "address":
-                    $address = array($ipdat->geoplugin_countryName);
-                    if (@strlen($ipdat->geoplugin_regionName) >= 1)
-                        $address[] = $ipdat->geoplugin_regionName;
-                    if (@strlen($ipdat->geoplugin_city) >= 1)
-                        $address[] = $ipdat->geoplugin_city;
-                    $output = implode(", ", array_reverse($address));
-                    break;
-                case "city":
-                    $output = @$ipdat->geoplugin_city;
-                    break;
-                case "state":
-                    $output = @$ipdat->geoplugin_regionName;
-                    break;
-                case "region":
-                    $output = @$ipdat->geoplugin_regionName;
-                    break;
-                case "country":
-                    $output = @$ipdat->geoplugin_countryName;
-                    break;
-                case "countrycode":
-                    $output = @$ipdat->geoplugin_countryCode;
-                    break;
-            }
-        }
-    }
-    return $output;
-}
-
-       $location = $req->input('location');
-       $user_city = ip_info("Visitor", "City");
+        $location = $req->input('location');
+        $user_city = $this->ip_info("Visitor", "City");
 
         if($req->input('make') && $req->input('model')){
-        $filter_query = trade_your_car::with('get_images')->where('make', $make)->where('model', $model)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
+            $filter_query = trade_your_car::with('get_images')->where('make', $make)->where('model', $model)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
         }elseif($req->input('model')){
-        $filter_query = trade_your_car::with('get_images')->where('model', $model)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
+            $filter_query = trade_your_car::with('get_images')->where('model', $model)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
         }elseif($req->input('make')){
-        $filter_query = trade_your_car::with('get_images')->where('make', $make)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
+            $filter_query = trade_your_car::with('get_images')->where('make', $make)->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
         }else{
-        $filter_query = trade_your_car::with('get_images')->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
+            $filter_query = trade_your_car::with('get_images')->where('publish_status', 'publish')->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->get();
         }
 
       	if($location == 'true') {
-    	return $filter_query->where('city', $user_city);
+    	    return $filter_query->where('city', $user_city);
 		}else{
-        return $filter_query;
+            return $filter_query;
         }
 
 
@@ -710,7 +726,8 @@ class Trade_Your_CarController extends Controller
 
     function addBid(Request $req) {
         $auctionItemId = $req->input('item_id');
-        $dealerId = $req->input('dealer_id');
+        $dealer = auth()->user();
+        $dealerId = $dealer->id;
         $query = auction_bids::where('dealer_user_id', '=', $dealerId)->where('auction_item_id', '=', $auctionItemId);
 
         if ($query->count() === 2) {
@@ -730,14 +747,13 @@ class Trade_Your_CarController extends Controller
 
         $bids = new auction_bids;
         $bids->bid_price=$req->input('bid_amount');
-        $bids->dealer_user_id=$req->input('dealer_id');
+        $bids->dealer_user_id=$dealerId;
         $bids->auction_item_id=$req->input('item_id');
         $bids->owner_user=$req->input('owner_id');
         $bids->save();
 
         // Send email notification
         $owner = User::find($bids->owner_user);
-        $dealer = User::find($bids->dealer_user_id);
         $auctionItem = trade_your_car::find($bids->auction_item_id);
         $itemName = "{$auctionItem->make} {$auctionItem->model}, {$auctionItem->vin}";
         Mail::to($owner)->send(new Bid(
@@ -750,18 +766,19 @@ class Trade_Your_CarController extends Controller
         return response()->json(['message' => "OK", 'status' => '200'], 200);
     }
 
-    function messaging_conversation($user_id = null, $user_type = null) {
-        if ($user_type == 'owner') {
+    function messaging_conversation() {
+        $user = auth()->user();
+        if ($user->user_type == 'Car Owner') {
             return messaging::join('users', 'users.id', '=', 'messaging.dealer_id')
-                ->where('owner_id', '=', $user_id)
+                ->where('owner_id', '=', $user->id)
                 ->where('approved_status', '=', 1)
                 ->groupBy('item_id')
                 ->orderBy('messaging.id', 'desc')
                 ->select('messaging.*', 'users.dp', 'users.name')
                 ->get();
-        } elseif ($user_type == 'dealer') {
+        } elseif ($user->user_type == 'Car Dealer') {
             return messaging::join('users', 'users.id', '=', 'messaging.owner_id')
-                ->where('dealer_id', '=', $user_id)
+                ->where('dealer_id', '=', $user->id)
                 ->where('approved_status', '=', 1)
                 ->groupBy('item_id')
                 ->orderBy('messaging.id', 'DESC')
@@ -773,8 +790,8 @@ class Trade_Your_CarController extends Controller
     function conversation($conversation = null){
 
         return DB::table('messaging')
-        ->join('users', 'users.id', '=', 'messaging.sent_by')
-        ->select('messaging.*', 'users.dp', 'users.name')
+            ->join('users', 'users.id', '=', 'messaging.sent_by')
+            ->select('messaging.*', 'users.dp', 'users.name')
             ->where('item_id', '=', $conversation)
             ->get();
 
@@ -782,34 +799,45 @@ class Trade_Your_CarController extends Controller
 
 
     function addMessaging(Request $req){
+        $user = auth()->user();
 
-        $msg   = new messaging;
+        if ($user->user_type == 'Car Owner' && !$req->input('dealer_id')) {
+            return response()->json(['message' => "Dealer ID is required", 'status' => '400'], 400);
+        }
 
-        $msg->dealer_id=$req->input('dealer_id');
-        $msg->owner_id=$req->input('owner_id');
+        if ($user->user_type == 'Car Dealer' && !$req->input('owner_id')) {
+            return response()->json(['message' => "Owner ID is required", 'status' => '400'], 400);
+        }
+
+        $recipient = null;
+        $msg = new messaging;
+
+        if ($user->user_type == 'Car Owner') {
+            $msg->owner_id = $user->id;
+            $msg->dealer_id = $req->input('dealer_id');
+            $recipient = User::find($msg->dealer_id);
+        } else if ($user->user_type == 'Car Dealer') {
+            $msg->owner_id = $req->input('owner_id');
+            $msg->dealer_id = $user->id;
+            $recipient = User::find($msg->owner_id);
+        }
+
+        $msg->sent_by=$user->id;
         $msg->item_id=$req->input('item_id');
         $msg->message=$req->input('message');
-        $msg->sent_by=$req->input('sent_by');
         $msg->approved_status = 1;
         $msg->save();
 
         // Send email notification
-        $sender = User::find($msg->sent_by);
-
-        $recipient = null;
-        if ($msg->sent_by == $msg->dealer_id) {
-            $recipient = User::find($msg->owner_id);
-        } else if ($msg->sent_by == $msg->owner_id) {
-            $recipient = User::find($msg->dealer_id);
-        }
-
         if ($recipient) {
             $item = trade_your_car::find($msg->item_id);
-            Mail::to($recipient)->send(new Message(
-                $sender->name,
-                $recipient->name,
-                "{$item->make} {$item->model}, {$item->vin}"
-            ));
+            if ($item) {
+                Mail::to($recipient)->send(new Message(
+                    $user->name,
+                    $recipient->name,
+                    "{$item->make} {$item->model}, {$item->vin}"
+                ));
+            }
         }
 
         return response()->json(['message' => "OK", 'status' => '200'], 200);
@@ -853,9 +881,15 @@ class Trade_Your_CarController extends Controller
 
     public function getZipCodesByRadius($zip_code, $radius)
     {
-        $url = config('constants.zipcode_api.base_url').$zip_code."/".$radius."/mile";
+        $key = "$zip_code/$radius/mile";
+        if (Cache::has($key)) {
+            return Cache::get($key);
+        }
+        $url = config('constants.zipcode_api.base_url') . $key;
         $res = Http::get($url);
-        return $res;
+        $zipCodes = $res->json('zip_codes');
+        Cache::forever($key, $zipCodes);
+        return $zipCodes;
     }
 
 

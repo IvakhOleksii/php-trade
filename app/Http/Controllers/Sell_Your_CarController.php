@@ -34,7 +34,7 @@ class Trade_Your_CarController extends Controller
         $car->make=$req->input('make');
         $car->model=$req->input('model');
         $car->color=$req->input('color');
-        $car->user_id=$req->input('user_id');
+        $car->user_id=auth()->user()->id;
         $car->body_type=$req->input('body_type');
         $car->condition=$req->input('condition');
         $car->exterior_color=$req->input('exterior_color');
@@ -79,328 +79,305 @@ class Trade_Your_CarController extends Controller
         $car->latitude=$req->input('latitude');
         $car->longitude=$req->input('longitude');
         $car->status="Pending";
-
         $car->save();
-
-        //return response()->json(['message' => "OK", 'status' => '200'], 200);
 
         $sell_id = $car->id;
 
-
-
-
-
-
-
-
         $allowedfileExtension=['jpg','png','JPG','PNG','jpeg','JPEG'];
-         /// starting front_Seats Image Upload
-         if($req->hasFile('front_Seats')) {
-           // return response()->json(['message' => "OK", 'status' => '200'], 200);
+        /// starting front_Seats Image Upload
+        if($req->hasFile('front_Seats')) {
+            // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-                        $files = $req->file('front_Seats');
+            $files = $req->file('front_Seats');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($req->front_Seats as $mediaFiles) {
+                if($check) {
+                    foreach($req->front_Seats as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
-                                    $file_name = str_replace("public/images/","",$url);
-                                    //store image file into directory and db
-                                    $save_front_Seats= new sell_car_images();
-                                    $save_front_Seats->image_key = $name;
-                                    $save_front_Seats->url = $file_name;
-                                    $save_front_Seats->sell_car_id = $sell_id;
-                                    $save_front_Seats->is_primary = 2;
-                                    $save_front_Seats->save();
-                                }
-                            } else {
-                                //return response()->json(['invalid_file_format'], 422);
-                            }
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
+                        $file_name = str_replace("public/images/","",$url);
+                        //store image file into directory and db
+                        $save_front_Seats= new sell_car_images();
+                        $save_front_Seats->image_key = $name;
+                        $save_front_Seats->url = $file_name;
+                        $save_front_Seats->sell_car_id = $sell_id;
+                        $save_front_Seats->is_primary = 2;
+                        $save_front_Seats->save();
+                    }
+                } else {
+                    //return response()->json(['invalid_file_format'], 422);
+                }
 
-                            //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                        }
+            }
 
-                 }
+        }
         /// ending front_Seats Image Upload
-
-
-
-
 
         /// starting dash Image Upload
         if($req->hasFile('dash')) {
-           // return response()->json(['message' => "OK", 'status' => '200'], 200);
+            // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-                        $files = $req->file('dash');
+            $files = $req->file('dash');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($req->dash as $mediaFiles) {
+                if($check) {
+                    foreach($req->dash as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
-                                    $file_name = str_replace("public/images/","",$url);
-                                    //store image file into directory and db
-                                    $save_dash = new sell_car_images();
-                                    $save_dash->image_key = $name;
-                                    $save_dash->url = $file_name;
-                                    $save_dash->sell_car_id = $sell_id;
-                                    $save_dash->is_primary = 3;
-                                    $save_dash->save();
-                                }
-                            } else {
-                                //return response()->json(['invalid_file_format'], 422);
-                            }
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
+                        $file_name = str_replace("public/images/","",$url);
+                        //store image file into directory and db
+                        $save_dash = new sell_car_images();
+                        $save_dash->image_key = $name;
+                        $save_dash->url = $file_name;
+                        $save_dash->sell_car_id = $sell_id;
+                        $save_dash->is_primary = 3;
+                        $save_dash->save();
+                    }
+                } else {
+                    //return response()->json(['invalid_file_format'], 422);
+                }
 
-                            //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                        }
+            }
 
-                 }
+        }
         /// ending dash Image Upload
 
 
         /// starting navigation Image Upload
         if($req->hasFile('navigation')) {
-           // return response()->json(['message' => "OK", 'status' => '200'], 200);
+            // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-                        $files = $req->file('navigation');
+            $files = $req->file('navigation');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($req->navigation as $mediaFiles) {
+                if($check) {
+                    foreach($req->navigation as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
-                                    $file_name = str_replace("public/images/","",$url);
-                                    //store image file into directory and db
-                                    $save_navigation = new sell_car_images();
-                                    $save_navigation->image_key = $name;
-                                    $save_navigation->url = $file_name;
-                                    $save_navigation->sell_car_id = $sell_id;
-                                    $save_navigation->is_primary = 4;
-                                    $save_navigation->save();
-                                }
-                            } else {
-                                //return response()->json(['invalid_file_format'], 422);
-                            }
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
+                        $file_name = str_replace("public/images/","",$url);
+                        //store image file into directory and db
+                        $save_navigation = new sell_car_images();
+                        $save_navigation->image_key = $name;
+                        $save_navigation->url = $file_name;
+                        $save_navigation->sell_car_id = $sell_id;
+                        $save_navigation->is_primary = 4;
+                        $save_navigation->save();
+                    }
+                } else {
+                    //return response()->json(['invalid_file_format'], 422);
+                }
 
-                            //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                        }
+            }
 
-                 }
+        }
         /// ending dash Image Upload
 
 
-         /// starting front Image Upload
-         if($req->hasFile('front')) {
-           // return response()->json(['message' => "OK", 'status' => '200'], 200);
+        /// starting front Image Upload
+        if($req->hasFile('front')) {
+            // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-                        $files = $req->file('front');
+            $files = $req->file('front');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($req->front as $mediaFiles) {
+                if($check) {
+                    foreach($req->front as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
-                                    $file_name = str_replace("public/images/","",$url);
-                                    //store image file into directory and db
-                                    $save_front = new sell_car_images();
-                                    $save_front->image_key = $name;
-                                    $save_front->url = $file_name;
-                                    $save_front->sell_car_id = $sell_id;
-                                    $save_front->is_primary = 5;
-                                    $save_front->save();
-                                }
-                            } else {
-                                //return response()->json(['invalid_file_format'], 422);
-                            }
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
+                        $file_name = str_replace("public/images/","",$url);
+                        //store image file into directory and db
+                        $save_front = new sell_car_images();
+                        $save_front->image_key = $name;
+                        $save_front->url = $file_name;
+                        $save_front->sell_car_id = $sell_id;
+                        $save_front->is_primary = 5;
+                        $save_front->save();
+                    }
+                } else {
+                    //return response()->json(['invalid_file_format'], 422);
+                }
 
-                            //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                        }
+            }
 
-                 }
+        }
         /// ending front Image Upload
 
 
-          /// starting rear Image Upload
-          if($req->hasFile('rear')) {
-           // return response()->json(['message' => "OK", 'status' => '200'], 200);
+        /// starting rear Image Upload
+        if($req->hasFile('rear')) {
+            // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-                        $files = $req->file('rear');
+            $files = $req->file('rear');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($req->rear as $mediaFiles) {
+                if($check) {
+                    foreach($req->rear as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
-                                    $file_name = str_replace("public/images/","",$url);
-                                    //store image file into directory and db
-                                    $save_rear = new sell_car_images();
-                                    $save_rear->image_key = $name;
-                                    $save_rear->url = $file_name;
-                                    $save_rear->sell_car_id = $sell_id;
-                                    $save_rear->is_primary = 6;
-                                    $save_rear->save();
-                                }
-                            } else {
-                                //return response()->json(['invalid_file_format'], 422);
-                            }
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
+                        $file_name = str_replace("public/images/","",$url);
+                        //store image file into directory and db
+                        $save_rear = new sell_car_images();
+                        $save_rear->image_key = $name;
+                        $save_rear->url = $file_name;
+                        $save_rear->sell_car_id = $sell_id;
+                        $save_rear->is_primary = 6;
+                        $save_rear->save();
+                    }
+                } else {
+                    //return response()->json(['invalid_file_format'], 422);
+                }
 
-                            //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                        }
+            }
 
-                 }
+        }
         /// ending rear Image Upload
 
 
 
 
 
-          /// starting driver_s_side Image Upload
-          if($req->hasFile('driver_s_side')) {
-           // return response()->json(['message' => "OK", 'status' => '200'], 200);
+        /// starting driver_s_side Image Upload
+        if($req->hasFile('driver_s_side')) {
+            // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-                        $files = $req->file('driver_s_side');
+            $files = $req->file('driver_s_side');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($req->driver_s_side as $mediaFiles) {
+                if($check) {
+                    foreach($req->driver_s_side as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
-                                    $file_name = str_replace("public/images/","",$url);
-                                    //store image file into directory and db
-                                    $save_driver_s_side = new sell_car_images();
-                                    $save_driver_s_side->image_key = $name;
-                                    $save_driver_s_side->url = $file_name;
-                                    $save_driver_s_side->sell_car_id = $sell_id;
-                                    $save_driver_s_side->is_primary = 7;
-                                    $save_driver_s_side->save();
-                                }
-                            } else {
-                                //return response()->json(['invalid_file_format'], 422);
-                            }
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
+                        $file_name = str_replace("public/images/","",$url);
+                        //store image file into directory and db
+                        $save_driver_s_side = new sell_car_images();
+                        $save_driver_s_side->image_key = $name;
+                        $save_driver_s_side->url = $file_name;
+                        $save_driver_s_side->sell_car_id = $sell_id;
+                        $save_driver_s_side->is_primary = 7;
+                        $save_driver_s_side->save();
+                    }
+                } else {
+                    //return response()->json(['invalid_file_format'], 422);
+                }
 
-                            //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                        }
+            }
 
-                 }
+        }
         /// ending driver_s_side Image Upload
 
 
 
         /// starting driver_s_side Image Upload
         if($req->hasFile('passenger_s_side')) {
-           // return response()->json(['message' => "OK", 'status' => '200'], 200);
+            // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-                        $files = $req->file('passenger_s_side');
+            $files = $req->file('passenger_s_side');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($req->passenger_s_side as $mediaFiles) {
+                if($check) {
+                    foreach($req->passenger_s_side as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
-                                    $file_name = str_replace("public/images/","",$url);
-                                    //store image file into directory and db
-                                    $save_passenger_s_side = new sell_car_images();
-                                    $save_passenger_s_side->image_key = $name;
-                                    $save_passenger_s_side->url = $file_name;
-                                    $save_passenger_s_side->sell_car_id = $sell_id;
-                                    $save_passenger_s_side->is_primary = 8;
-                                    $save_passenger_s_side->save();
-                                }
-                            } else {
-                                //return response()->json(['invalid_file_format'], 422);
-                            }
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
+                        $file_name = str_replace("public/images/","",$url);
+                        //store image file into directory and db
+                        $save_passenger_s_side = new sell_car_images();
+                        $save_passenger_s_side->image_key = $name;
+                        $save_passenger_s_side->url = $file_name;
+                        $save_passenger_s_side->sell_car_id = $sell_id;
+                        $save_passenger_s_side->is_primary = 8;
+                        $save_passenger_s_side->save();
+                    }
+                } else {
+                    //return response()->json(['invalid_file_format'], 422);
+                }
 
-                            //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                        }
+            }
 
-                 }
+        }
         /// ending passenger_s_side Image Upload
-
-
-
-
-
-
-
-
-
 
         /// starting Image Upload
         if($req->hasFile('additional_photos')) {
-           // return response()->json(['message' => "OK", 'status' => '200'], 200);
+            // return response()->json(['message' => "OK", 'status' => '200'], 200);
 
-                        $files = $req->file('additional_photos');
+            $files = $req->file('additional_photos');
 
-                        foreach ($files as $file) {
-                            $extension = $file->getClientOriginalExtension();
+            foreach ($files as $file) {
+                $extension = $file->getClientOriginalExtension();
 
-                            $check = in_array($extension,$allowedfileExtension);
+                $check = in_array($extension,$allowedfileExtension);
 
-                            if($check) {
-                                foreach($req->additional_photos as $mediaFiles) {
+                if($check) {
+                    foreach($req->additional_photos as $mediaFiles) {
 
-                                    $url = $mediaFiles->store('public/images/');
-                                    $name = $mediaFiles->getClientOriginalName();
-                                    $file_name = str_replace("public/images/","",$url);
-                                    //store image file into directory and db
-                                    $save = new sell_car_images();
-                                    $save->image_key = $name;
-                                    $save->url = $file_name;
-                                    $save->sell_car_id = $sell_id;
-                                    $save->save();
-                                }
-                            } else {
-                                return response()->json(['invalid_file_format'], 422);
-                            }
+                        $url = $mediaFiles->store('public/images/');
+                        $name = $mediaFiles->getClientOriginalName();
+                        $file_name = str_replace("public/images/","",$url);
+                        //store image file into directory and db
+                        $save = new sell_car_images();
+                        $save->image_key = $name;
+                        $save->url = $file_name;
+                        $save->sell_car_id = $sell_id;
+                        $save->save();
+                    }
+                } else {
+                    return response()->json(['invalid_file_format'], 422);
+                }
 
-                            //return response()->json(['file_uploaded'], 200);
+                //return response()->json(['file_uploaded'], 200);
 
-                        }
+            }
 
-                 }
+        }
         /// ending Image Upload
 
         return response()->json(['file_uploaded'], 200);
