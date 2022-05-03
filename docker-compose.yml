@@ -23,7 +23,7 @@ services:
 
   myapp:
     tty: true
-    image: docker.io/bitnami/laravel:8
+    image: docker.io/bitnami/laravel:9
     environment:
       - DB_HOST=mariadb
       - DB_USERNAME=root
@@ -32,7 +32,7 @@ services:
     depends_on:
       - mariadb
     ports:
-      - 3000:3000
+      - 8000:8000
     volumes:
       - ./:/app
     # privileged: true # Privileged mode could be required to run this container under Windows
