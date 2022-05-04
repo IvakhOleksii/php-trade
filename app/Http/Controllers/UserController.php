@@ -348,7 +348,9 @@ class UserController extends Controller
     }
 
     public function logout(Request $request) {
-        auth()->logout();
+        if (auth()->user()) {
+            auth()->logout();
+        }
         return response()->json(['message' => 'User Logged out', 'status' => '200'], 200);
     }
 
