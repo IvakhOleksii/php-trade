@@ -33,7 +33,7 @@ class Registration extends Mailable
     public function build()
     {
         return $this
-            ->subject("Done! Your {$this->type} account has been created")
+            ->subject($this->type === "owner" ? "Done! Your owner account has been created" : "Your dealer account is under review")
             ->view($this->type == "owner" ? "emails.owner-registration" : "emails.dealer-registration");
     }
 }
