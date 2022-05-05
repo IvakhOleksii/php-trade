@@ -169,12 +169,20 @@ class UserController extends Controller
             'password' => ['required'],
         ]);
 
+        $user = User::where('email', $request->email)->first();
+        if ($user->user_type == 'Car Dealer' && !$user->approved) {
+            return response()->json([
+                'error' => 'NotApproved',
+                'status' => 422
+            ], 422);
+        }
+
         if (!$token = auth()->attempt($credentials)) {
             return response()->json(['error' => 'WrongCredentials', 'status' => '320'], 320);
         }
 
-        $user =User::where('email',$request->email)->first();
         $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealerName"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "zip_code"=>$user->zip_code, "Licence"=>$user->dealer_licence, "dealer_image"=>$user->dp);
+
         return response()->json([
             'message' => "OK",
             'data' => $user_data,
