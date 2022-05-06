@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\contact_us;
 
 use App\Mail\Registration;
+use App\Mail\ApprovalRequest;
 
 use Illuminate\Support\Facades\Hash;
 
@@ -44,6 +45,7 @@ class UserController extends Controller
         $user->latitude=$req->input('latitude');
         $user->longitude=$req->input('longitude');
         $user->zip_code=$req->input('zip_code');
+        $user->approved = $req->input('user_type') != 'Car Dealer';
 
         //Add the default image for users if not there
         if($user->user_type == 'Car Owner' && !$req->hasFile('dealer_image')) {
@@ -134,8 +136,13 @@ class UserController extends Controller
                 'status' => '200'
             ];
 
-            // Create JWT token if user is not a dealer
-            if ($user->user_type != 'Car Dealer') {
+            if ($user->user_type == 'Car Dealer') {
+                // Send an email to reviewer
+                Mail::to([
+                    'email' => env('REVIEWER_EMAIL', '')
+                ])->send(new ApprovalRequest($user));
+            } else {
+                // Create JWT token if user is not a dealer
                 $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
                 "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
                 $token = auth()->tokenById($user->id);
@@ -173,8 +180,8 @@ class UserController extends Controller
         if ($user->user_type == 'Car Dealer' && !$user->approved) {
             return response()->json([
                 'error' => 'NotApproved',
-                'status' => 422
-            ], 422);
+                'status' => 400
+            ], 400);
         }
 
         if (!$token = auth()->attempt($credentials)) {
