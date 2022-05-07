@@ -14,7 +14,7 @@ class AddApprovedStatusToUsers extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->boolean('approved')->default(false);
+            $table->tinyInteger('approved_status')->default(0);
         });
     }
 
@@ -26,7 +26,7 @@ class AddApprovedStatusToUsers extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('approved');
+            $table->dropColumn('approved_status');
         });
     }
 }

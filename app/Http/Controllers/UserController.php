@@ -45,7 +45,7 @@ class UserController extends Controller
         $user->latitude=$req->input('latitude');
         $user->longitude=$req->input('longitude');
         $user->zip_code=$req->input('zip_code');
-        $user->approved = $req->input('user_type') != 'Car Dealer';
+        $user->approved_status = $req->input('user_type') == 'Car Dealer' ? 0 : 1;
 
         //Add the default image for users if not there
         if($user->user_type == 'Car Owner' && !$req->hasFile('dealer_image')) {
@@ -177,7 +177,7 @@ class UserController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
-        if ($user->user_type == 'Car Dealer' && !$user->approved) {
+        if ($user->user_type == 'Car Dealer' && $user->approved_status != 1) {
             return response()->json([
                 'error' => 'NotApproved',
                 'status' => 400
