@@ -26,6 +26,7 @@ class UserController extends Controller
 {
     //
     function register(Request $req){
+        $now = date("Y-m-d H:i:s");
 
         // $result = $req->file('license')->store('images');
         // return ["result"=>$result]; exit;
@@ -46,6 +47,8 @@ class UserController extends Controller
         $user->longitude=$req->input('longitude');
         $user->zip_code=$req->input('zip_code');
         $user->approved_status = $req->input('user_type') == 'Car Dealer' ? 0 : 1;
+        $user->created_at = $now;
+        $user->updated_at = $now;
 
         //Add the default image for users if not there
         if($user->user_type == 'Car Owner' && !$req->hasFile('dealer_image')) {
