@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\contact_us;
 
 use App\Mail\Registration;
+use App\Mail\ApprovalRequest;
 
 use Illuminate\Support\Facades\Hash;
 
@@ -25,6 +26,7 @@ class UserController extends Controller
 {
     //
     function register(Request $req){
+        $now = date("Y-m-d H:i:s");
 
         // $result = $req->file('license')->store('images');
         // return ["result"=>$result]; exit;
@@ -44,6 +46,9 @@ class UserController extends Controller
         $user->latitude=$req->input('latitude');
         $user->longitude=$req->input('longitude');
         $user->zip_code=$req->input('zip_code');
+        $user->approved_status = $req->input('user_type') == 'Car Dealer' ? 0 : 1;
+        $user->created_at = $now;
+        $user->updated_at = $now;
 
         //Add the default image for users if not there
         if($user->user_type == 'Car Owner' && !$req->hasFile('dealer_image')) {
@@ -129,18 +134,26 @@ class UserController extends Controller
             // Send email notification
             Mail::to($user)->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer"));
 
-            $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
-            "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
-
-            // Create JWT token
-            $token = auth()->tokenById($user->id);
-
-            return response()->json([
+            $response = [
                 'message' => "OK",
-                'data' => $user_data,
-                'token' => $token,
                 'status' => '200'
-            ], 200);
+            ];
+
+            if ($user->user_type == 'Car Dealer') {
+                // Send an email to reviewer
+                Mail::to([
+                    'email' => env('REVIEWER_EMAIL', '')
+                ])->send(new ApprovalRequest($user));
+            } else {
+                // Create JWT token if user is not a dealer
+                $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
+                "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
+                $token = auth()->tokenById($user->id);
+                $response['data'] = $user_data;
+                $response['token'] = $token;
+            }
+
+            return response()->json($response, 200);
         } else {
             return response()->json(['error' => 'Exist', 'status' => '300'], 300);
         }
@@ -166,12 +179,20 @@ class UserController extends Controller
             'password' => ['required'],
         ]);
 
+        $user = User::where('email', $request->email)->first();
+        if ($user->user_type == 'Car Dealer' && $user->approved_status != 1) {
+            return response()->json([
+                'error' => 'NotApproved',
+                'status' => 400
+            ], 400);
+        }
+
         if (!$token = auth()->attempt($credentials)) {
             return response()->json(['error' => 'WrongCredentials', 'status' => '320'], 320);
         }
 
-        $user =User::where('email',$request->email)->first();
         $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address, "phone"=>$user->phone, "dealerName"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "zip_code"=>$user->zip_code, "Licence"=>$user->dealer_licence, "dealer_image"=>$user->dp);
+
         return response()->json([
             'message' => "OK",
             'data' => $user_data,
