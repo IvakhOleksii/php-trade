@@ -7,22 +7,20 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class Registration extends Mailable
+class ApprovalRequest extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $name;
-    public $type;
+    public $user;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($name, $type)
+    public function __construct($user)
     {
-        $this->name = $name;
-        $this->type = $type;
+        $this->user = $user;
     }
 
     /**
@@ -33,7 +31,7 @@ class Registration extends Mailable
     public function build()
     {
         return $this
-            ->subject($this->type === "owner" ? "Done! Your owner account has been created" : "Your dealer account is under review")
-            ->view($this->type == "owner" ? "emails.owner-registration" : "emails.dealer-registration");
+            ->subject("There is a pending approval waiting")
+            ->view("emails.approval-request");
     }
 }
