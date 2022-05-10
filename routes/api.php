@@ -30,6 +30,7 @@ Route::post('/forget', [UserController::class, 'forgetPass']);
 Route::post('/login', [UserController::class, 'login']);
 Route::post('/check_vin', [UserController::class, 'checkVin']);
 Route::post('/contact_us', [UserController::class, 'contact']);
+Route::post('/logout', [UserController::class, 'logout']);
 
 Route::group([
     'middleware' => 'jwt.verify'
@@ -43,7 +44,6 @@ Route::group([
 
     Route::post('/resetpassword', [UserController::class, 'resetPassword']);
     Route::post('/update_user', [UserController::class, 'update']);
-    Route::post('/logout', [UserController::class, 'logout']);
     Route::get('/trade_your_car_list', [Trade_Your_CarController::class, 'list']);
     Route::get('/sell_your_car_list', [Trade_Your_CarController::class, 'listSell']);
     Route::get('/list_auction_owner', [Trade_Your_CarController::class, 'list_owner']);
