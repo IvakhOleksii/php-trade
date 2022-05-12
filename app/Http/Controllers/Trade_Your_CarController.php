@@ -103,6 +103,7 @@ class Trade_Your_CarController extends Controller
         $car->status="Pending";
         $car->publish_status=$req->input('publish_status');
         $car->expiry_at=date("Y-m-d H:i:s", strtotime('+1 week'));
+        $car->purchase_time = $req->input('purchase_time');
 
         if ($req->input('id')) {
            $data = $req->input();
