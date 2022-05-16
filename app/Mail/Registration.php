@@ -13,16 +13,18 @@ class Registration extends Mailable
 
     public $name;
     public $type;
+    public $link;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($name, $type)
+    public function __construct($name, $type, $verifyKey)
     {
         $this->name = $name;
         $this->type = $type;
+        $this->link = $verifyKey ? config('app.url') . "/verify/$verifyKey" : "";
     }
 
     /**
