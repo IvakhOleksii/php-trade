@@ -14,7 +14,7 @@ class AddVerifyKeyToUsers extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('verify_key');
+            $table->string('verify_key')->nullable();
         });
     }
 
