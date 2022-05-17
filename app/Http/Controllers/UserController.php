@@ -392,21 +392,17 @@ class UserController extends Controller
             $user = User::find($decoded->id);
             if (!$user) {
                 echo "User does not exist.";
-            }
-
-            if ($user->approved_status == 1) {
+            } else if ($user->approved_status == 1) {
                 echo "User is already verified.";
-            }
-
-            if ($user->verify_key != $key) {
+            } else if ($user->verify_key != $key) {
                 echo "Your verification key is not valid.";
+            } else {
+                $user->approved_status = 1;
+                $user->verify_key = null;
+                $user->save();
+
+                echo "Thank you for verifying your account! Redirecting to " . env('FRONT_URL', '') . "...<script>setTimeout(function() { window.location.href = '" . env('FRONT_URL', '') . "'; }, 3000);</script>";
             }
-
-            $user->approved_status = 1;
-            $user->verify_key = null;
-            $user->save();
-
-            echo "Thank you for verifying your account! Redirecting to " . env('FRONT_URL', '') . "...<script>setTimeout(function() { window.location.href = '" . env('FRONT_URL', '') . "'; }, 3000);</script>";
         } catch (\Exception $e) {
             echo "Your verification link is not valid or has expired.";
         }
