@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddPurchaseTimeToTradeyourcar extends Migration
+class AddTradeTimeToTradeyourcar extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,7 @@ class AddPurchaseTimeToTradeyourcar extends Migration
     public function up()
     {
         Schema::table('trade_your_car', function (Blueprint $table) {
-            $table->tinyInteger('purchase_time');
+            $table->tinyInteger('trade_time')->nullable();
         });
     }
 
@@ -26,7 +26,7 @@ class AddPurchaseTimeToTradeyourcar extends Migration
     public function down()
     {
         Schema::table('trade_your_car', function (Blueprint $table) {
-            $table->dropColumn('purchase_time');
+            $table->dropColumn('trade_time');
         });
     }
 }
