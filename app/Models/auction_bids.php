@@ -14,10 +14,13 @@ class auction_bids extends Model
 
 
 
-    function get_images(){
-        return $this->hasMany('App\Models\trade_car_images', 'sell_car_id', 'auction_item_id');
+    function get_images() {
+        return $this->hasMany(trade_car_images::class, 'sell_car_id', 'auction_item_id');
     }
-    
+
+    function dealer() {
+        return $this->belongsTo(User::class, 'dealer_user_id');
+    }
    
     public $timestamps = false;
 }
