@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class UserController extends Controller
 {
@@ -46,7 +48,7 @@ class UserController extends Controller
         $user->latitude=$req->input('latitude');
         $user->longitude=$req->input('longitude');
         $user->zip_code=$req->input('zip_code');
-        $user->approved_status = $req->input('user_type') == 'Car Dealer' ? 0 : 1;
+        $user->approved_status = 0;
         $user->created_at = $now;
         $user->updated_at = $now;
 
@@ -129,10 +131,26 @@ class UserController extends Controller
             }
             /// ending Image Upload
 
+            
             $user->save();
+            
+            // Generate jwt key that expires in a week for owner user
+            $verifyKey = "";
+            if ($user->user_type == "Car Owner") {
+                $issuedAt = time();
+                $expirationTime = $issuedAt + 7 * 60 * 24 * 60;
+                $payload = array(
+                    'id' => $user->id,
+                    'iat' => $issuedAt,
+                    'exp' => $expirationTime,
+                );
+                $verifyKey = JWT::encode($payload, env('VERIFY_JWT_SECRET', ''), 'HS256');
+                $user->verify_key = $verifyKey;
+                $user->save();
+            }
 
             // Send email notification
-            Mail::to($user)->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer"));
+            Mail::to($user)->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer", $verifyKey));
 
             $response = [
                 'message' => "OK",
@@ -144,13 +162,6 @@ class UserController extends Controller
                 Mail::to([
                     'email' => env('REVIEWER_EMAIL', '')
                 ])->send(new ApprovalRequest($user));
-            } else {
-                // Create JWT token if user is not a dealer
-                $user_data = array("id"=>$user->id, "name"=>$user->name, "email"=>$user->email, "user_type"=>$user->user_type, "state"=>$user->state, "city"=>$user->city, "address"=>$user->address,
-                "zip_code"=>$user->zip_code,"phone"=>$user->phone, "dealername"=>$user->dealerName, "companywebsite"=>$user->companywebsite, "car_make"=>$user->car_make, "Licence"=>$file_name, "dealer_image"=>$user->dp);
-                $token = auth()->tokenById($user->id);
-                $response['data'] = $user_data;
-                $response['token'] = $token;
             }
 
             return response()->json($response, 200);
@@ -180,9 +191,9 @@ class UserController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
-        if ($user->user_type == 'Car Dealer' && $user->approved_status != 1) {
+        if ($user->approved_status != 1) {
             return response()->json([
-                'error' => 'NotApproved',
+                'error' => $user->user_type == 'Car Dealer' ? 'NotApproved' : 'NotVerified',
                 'status' => 400
             ], 400);
         }
@@ -373,6 +384,28 @@ class UserController extends Controller
             auth()->logout();
         }
         return response()->json(['message' => 'User Logged out', 'status' => '200'], 200);
+    }
+
+    public function verifyUser($key) {
+        try {
+            $decoded = JWT::decode($key, new Key(env('VERIFY_JWT_SECRET', ''), 'HS256'));
+            $user = User::find($decoded->id);
+            if (!$user) {
+                echo "User does not exist.";
+            } else if ($user->approved_status == 1) {
+                echo "User is already verified.";
+            } else if ($user->verify_key != $key) {
+                echo "Your verification key is not valid.";
+            } else {
+                $user->approved_status = 1;
+                $user->verify_key = null;
+                $user->save();
+
+                echo "Thank you for verifying your account! Redirecting to " . env('FRONT_URL', '') . "...<script>setTimeout(function() { window.location.href = '" . env('FRONT_URL', '') . "'; }, 3000);</script>";
+            }
+        } catch (\Exception $e) {
+            echo "Your verification link is not valid or has expired.";
+        }
     }
 
 }
