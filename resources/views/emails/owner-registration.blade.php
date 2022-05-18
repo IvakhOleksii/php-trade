@@ -1,8 +1,13 @@
-<h2>Congratulations! Your owner account is ready</h2>
+<h2>Last Step for Registration</h2>
 
 <hr>
 
 <p>
-  Dear {{ $name }},<br><br>
-  Thank you for your registration! You are good to go now. Please contact us for more details at any time.
+  Hi {{ $name }}<br><br>
+  Thank you for registering with TraderSell!<br><br>
+  To complete the registration process, please click the time-sensitive <a href="{{ $link }}" target="_blank">link</a> below to activate your account.<br>
+  This <a href="{{ $link }}" target="_blank">link</a> expires in a week.<br><br>
+  We’re happy to have you join our network! If you have any questions, please don't hesitate to contact us.<br></br>
+  Thank you,<br>
+  The TraderSell Team
 </p>
