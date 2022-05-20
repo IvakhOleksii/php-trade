@@ -22,7 +22,7 @@ class trade_your_car extends Model
         return $this->hasMany(auction_bids::class, 'auction_item_id', 'id');
     }
 
-    function auction_bid_with_max_price() {
+    function top_auction_bid() {
         return $this->hasOne(auction_bids::class, 'auction_item_id', 'id')->orderBy('bid_price', 'DESC');
     }
 

@@ -435,46 +435,73 @@ class Trade_Your_CarController extends Controller
     {
         return $this->belongsToMany('Category', 'category_products');
     }
+
     public function list_owner(Request $req)
     {
         $now = date("Y-m-d H:i:s");
+
         //Check for type error
-        if(!$req->type) {
-            return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
+        $type = $req->type;
+        if (!$type) {
+            return response()->json(['error' => 'Bad request', 'status' => '400'], 400);
         }
-        $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
-            $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
-        }])->where('type', $req->type)->where('publish_status','!=','rejected');
-        if($req->bids) {
+
+        $expired = $req->expired;
+
+        if ($expired) {
+            $relations = array(
+                'get_images',
+                'auction_bids' => function ($q) {
+                    $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
+                },
+                'top_auction_bid:bid_id,auction_item_id,dealer_user_id,bid_price',
+                'top_auction_bid.dealer:id,name,email,location,state,city,address,dealername,companywebsite,dp,phone,zip_code',
+                'top_auction_bid.get_images'
+            );
+        } else {
+            $relations = array(
+                'get_images',
+                'auction_bids' => function ($q) {
+                    $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
+                }
+            );
+        }
+
+        $query = trade_your_car::with($relations)->where('type', $type)->where('publish_status', '!=', 'rejected');
+
+        if ($req->bids) {
             $query = $query->has('auction_bids');
         }
 
         $userId = auth()->user()->id;
         $query = $query->where('user_id', $userId);
+
         //Check for draft or published
-         if($req->publish_status) {
-            $query = $query->where('publish_status',$req->publish_status);
-         }
-         else {
-          $query = $query->where('publish_status','publish');
-          if($req->expired) {
-             $query = $query->where('expiry_at','<=',$now);
-           }
-           else {
-             $query = $query->where('expiry_at','>=',$now);
+        $publish_status = $req->publish_status;
+        if ($publish_status) {
+            $query = $query->where('publish_status', $publish_status);
+        } else {
+            $query = $query->where('publish_status', 'publish');
+            if ($expired) {
+                $query = $query->where('expiry_at', '<=', $now);
+            } else {
+                $query = $query->where('expiry_at', '>=', $now);
             }
-          }
+        }
 
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
+        $total = $query->count();
+        $auctions = $query->orderBy('id', 'DESC')->skip($start)->take($limit)->get();
 
         return array(
             'start' => $start,
             'limit' => $limit,
-            'total' => $query->count(),
-            'auctions' => $query->orderBy('id', 'DESC')->skip($start)->take($limit)->get()
+            'total' => $total,
+            'auctions' => $auctions
         );
     }
+
     public function list_dealer(Request $req)
     {
         $now = date("Y-m-d H:i:s");
@@ -539,7 +566,7 @@ class Trade_Your_CarController extends Controller
                 $q->orderBy('bid_price', 'DESC');
             }])
             ->where('trade_your_car.publish_status', 'publish')
-            ->whereHas('auction_bid_with_max_price', function($q) use ($dealerId) {
+            ->whereHas('top_auction_bid', function($q) use ($dealerId) {
                 $q->where('dealer_user_id', $dealerId);
             })
             ->orderBy('trade_your_car.id', 'DESC');
