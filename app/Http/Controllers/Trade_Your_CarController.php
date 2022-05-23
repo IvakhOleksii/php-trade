@@ -508,9 +508,9 @@ class Trade_Your_CarController extends Controller
         $authUser = auth()->user();
 
         //Query current auction results
-        $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
+        $query = trade_your_car::with(['get_images', 'auction_bids' => function ($q) {
             $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
-        }])->where('trade_your_car.publish_status','publish')->where('trade_your_car.expiry_at', '>=', $now);
+        }])->where('publish_status','publish')->where('expiry_at', '>=', $now);
 
         //Published and currently has a bid by this user
         if ($req->current_bids) {
@@ -519,19 +519,21 @@ class Trade_Your_CarController extends Controller
                 $query->where('dealer_user_id', $dealerId);
             });
         }
+
         //Check for Car Make
         if ($req->make) {
             $make = strtolower($req->make);
-            $query->whereRaw('LOWER(trade_your_car.make) LIKE ?', ["%$make%"]);
+            $query->whereRaw('LOWER(make) LIKE ?', ["%$make%"]);
         }
+
         //Check for Car Model
         if ($req->model) {
             $model = strtolower($req->model);
-            $query->whereRaw('LOWER(trade_your_car.model) LIKE ?', ["%$model%"]);
+            $query->whereRaw('LOWER(model) LIKE ?', ["%$model%"]);
         }
 
         if ($req->state) {
-            $query->where('trade_your_car.state', $req->state);
+            $query->where('state', $req->state);
         }
 
         if ($req->proximity == "1" && $authUser->zip_code) {
@@ -549,23 +551,29 @@ class Trade_Your_CarController extends Controller
 
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
+        $total = $query->count();
+        $auctions = $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->select('trade_your_car.*')->get();
 
         return array(
             'start' => $start,
             'limit' => $limit,
-            'total' => $query->count(),
-            'auctions' => $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->select('trade_your_car.*')->get()
+            'total' => $total,
+            'auctions' => $auctions
         );
     }
 
     public function list_dealer_top(Request $req)
     {
         $dealerId = auth()->user()->id;
-        $query = trade_your_car::with('get_images')
-            ->with(['auction_bids' => function ($q) {
+        $query = trade_your_car::with([
+            'get_images',
+            'auction_bids' => function ($q) {
                 $q->orderBy('bid_price', 'DESC');
-            }])
-            ->where('trade_your_car.publish_status', 'publish')
+            },
+            'auction_bids.owner:id,name,email,location,state,city,address,dp,phone,zip_code',
+            'auction_bids.get_images'
+        ])
+            ->where('publish_status', 'publish')
             ->whereHas('top_auction_bid', function($q) use ($dealerId) {
                 $q->where('dealer_user_id', $dealerId);
             })
@@ -573,12 +581,14 @@ class Trade_Your_CarController extends Controller
 
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
+        $total = $query->count();
+        $auctions = $query->skip($start)->take($limit)->get();
 
         return array(
             'start' => $start,
             'limit' => $limit,
-            'total' => $query->count(),
-            'auctions' => $query->skip($start)->take($limit)->get()
+            'total' => $total,
+            'auctions' => $auctions
         );
     }
 
