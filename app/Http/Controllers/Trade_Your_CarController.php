@@ -576,13 +576,12 @@ class Trade_Your_CarController extends Controller
             ->where('publish_status', 'publish')
             ->whereHas('top_auction_bid', function($q) use ($dealerId) {
                 $q->where('dealer_user_id', $dealerId);
-            })
-            ->orderBy('trade_your_car.id', 'DESC');
+            });
 
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
         $total = $query->count();
-        $auctions = $query->skip($start)->take($limit)->get();
+        $auctions = $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->get();
 
         return array(
             'start' => $start,
@@ -809,7 +808,7 @@ class Trade_Your_CarController extends Controller
         if ($user->user_type == 'Car Owner') {
             return messaging::join('users', 'users.id', '=', 'messaging.dealer_id')
                 ->where('owner_id', '=', $user->id)
-                ->where('approved_status', '=', 1)
+                ->where('messaging.approved_status', '=', 1)
                 ->groupBy('item_id')
                 ->orderBy('messaging.id', 'desc')
                 ->select('messaging.*', 'users.dp', 'users.name')
@@ -817,7 +816,7 @@ class Trade_Your_CarController extends Controller
         } elseif ($user->user_type == 'Car Dealer') {
             return messaging::join('users', 'users.id', '=', 'messaging.owner_id')
                 ->where('dealer_id', '=', $user->id)
-                ->where('approved_status', '=', 1)
+                ->where('messaging.approved_status', '=', 1)
                 ->groupBy('item_id')
                 ->orderBy('messaging.id', 'DESC')
                 ->select('messaging.*', 'users.dp', 'users.name')
