@@ -150,7 +150,7 @@ class UserController extends Controller
             }
 
             // Send email notification
-            Mail::to($user)->send(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer", $verifyKey));
+            Mail::to($user)->queue(new Registration($user->name, $user->user_type == "Car Owner" ? "owner" : "dealer", $verifyKey));
 
             $response = [
                 'message' => "OK",
@@ -161,7 +161,7 @@ class UserController extends Controller
                 // Send an email to reviewer
                 Mail::to([
                     'email' => env('REVIEWER_EMAIL', '')
-                ])->send(new ApprovalRequest($user));
+                ])->queue(new ApprovalRequest($user));
             }
 
             return response()->json($response, 200);
