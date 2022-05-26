@@ -412,7 +412,7 @@ class Trade_Your_CarController extends Controller
         // Check draft or published and send email notification if published
         if ($car->publish_status && $car->publish_status != "draft") {
             $user = auth()->user();
-            Mail::to($user)->send(new Auction(
+            Mail::to($user)->queue(new Auction(
                 $user->name,
                 $car->publish_status,
                 array(
@@ -793,7 +793,7 @@ class Trade_Your_CarController extends Controller
         $owner = User::find($bids->owner_user);
         $auctionItem = trade_your_car::find($bids->auction_item_id);
         $itemName = "{$auctionItem->make} {$auctionItem->model}, {$auctionItem->vin}";
-        Mail::to($owner)->send(new Bid(
+        Mail::to($owner)->queue(new Bid(
             $owner->name,
             $dealer,
             $itemName,
@@ -869,7 +869,7 @@ class Trade_Your_CarController extends Controller
         if ($recipient) {
             $item = trade_your_car::find($msg->item_id);
             if ($item) {
-                Mail::to($recipient)->send(new Message(
+                Mail::to($recipient)->queue(new Message(
                     $user->name,
                     $recipient->name,
                     "{$item->make} {$item->model}, {$item->vin}"
