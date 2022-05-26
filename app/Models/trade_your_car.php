@@ -15,15 +15,15 @@ class trade_your_car extends Model
     public $timestamps = false;
 
     function get_images(){
-        return $this->hasMany('App\Models\trade_car_images', 'sell_car_id', 'id');
+        return $this->hasMany(trade_car_images::class, 'sell_car_id', 'id');
     }
 
     function auction_bids() {
-        return $this->hasMany('App\Models\auction_bids', 'auction_item_id', 'id');
+        return $this->hasMany(auction_bids::class, 'auction_item_id', 'id');
     }
 
-    function auction_bid_with_max_price() {
-        return $this->hasOne('App\Models\auction_bids', 'auction_item_id', 'id')->orderBy('bid_price', 'DESC');
+    function top_auction_bid() {
+        return $this->hasOne(auction_bids::class, 'auction_item_id', 'id')->orderBy('bid_price', 'DESC');
     }
 
 }

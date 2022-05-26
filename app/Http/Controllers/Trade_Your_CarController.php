@@ -435,55 +435,82 @@ class Trade_Your_CarController extends Controller
     {
         return $this->belongsToMany('Category', 'category_products');
     }
+
     public function list_owner(Request $req)
     {
         $now = date("Y-m-d H:i:s");
+
         //Check for type error
-        if(!$req->type) {
-            return response()->json(['error' => ' Bad request', 'status' => '400'], 400);
+        $type = $req->type;
+        if (!$type) {
+            return response()->json(['error' => 'Bad request', 'status' => '400'], 400);
         }
-        $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
-            $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
-        }])->where('type', $req->type)->where('publish_status','!=','rejected');
-        if($req->bids) {
+
+        $expired = $req->expired;
+
+        if ($expired) {
+            $relations = array(
+                'get_images',
+                'auction_bids' => function ($q) {
+                    $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
+                },
+                'top_auction_bid:bid_id,auction_item_id,dealer_user_id,bid_price',
+                'top_auction_bid.dealer:id,name,email,location,state,city,address,dealername,companywebsite,dp,phone,zip_code',
+                'top_auction_bid.get_images'
+            );
+        } else {
+            $relations = array(
+                'get_images',
+                'auction_bids' => function ($q) {
+                    $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
+                }
+            );
+        }
+
+        $query = trade_your_car::with($relations)->where('type', $type)->where('publish_status', '!=', 'rejected');
+
+        if ($req->bids) {
             $query = $query->has('auction_bids');
         }
 
         $userId = auth()->user()->id;
         $query = $query->where('user_id', $userId);
+
         //Check for draft or published
-         if($req->publish_status) {
-            $query = $query->where('publish_status',$req->publish_status);
-         }
-         else {
-          $query = $query->where('publish_status','publish');
-          if($req->expired) {
-             $query = $query->where('expiry_at','<=',$now);
-           }
-           else {
-             $query = $query->where('expiry_at','>=',$now);
+        $publish_status = $req->publish_status;
+        if ($publish_status) {
+            $query = $query->where('publish_status', $publish_status);
+        } else {
+            $query = $query->where('publish_status', 'publish');
+            if ($expired) {
+                $query = $query->where('expiry_at', '<=', $now);
+            } else {
+                $query = $query->where('expiry_at', '>=', $now);
             }
-          }
+        }
 
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
+        $total = $query->count();
+        $auctions = $query->orderBy('id', 'DESC')->skip($start)->take($limit)->get();
 
         return array(
             'start' => $start,
             'limit' => $limit,
-            'total' => $query->count(),
-            'auctions' => $query->orderBy('id', 'DESC')->skip($start)->take($limit)->get()
+            'total' => $total,
+            'auctions' => $auctions
         );
     }
+
     public function list_dealer(Request $req)
     {
         $now = date("Y-m-d H:i:s");
         $authUser = auth()->user();
 
         //Query current auction results
-        $query = trade_your_car::with('get_images')->with(['auction_bids' => function ($q) {
+        $query = trade_your_car::with(['get_images', 'auction_bids' => function ($q) {
             $q->where("approved_status", "!=", 7)->orderBy('bid_price', 'DESC');
-        }])->where('trade_your_car.publish_status','publish')->where('trade_your_car.expiry_at', '>=', $now);
+        }])->where('publish_status','publish')->where('expiry_at', '>=', $now);
 
         //Published and currently has a bid by this user
         if ($req->current_bids) {
@@ -492,19 +519,21 @@ class Trade_Your_CarController extends Controller
                 $query->where('dealer_user_id', $dealerId);
             });
         }
+
         //Check for Car Make
         if ($req->make) {
             $make = strtolower($req->make);
-            $query->whereRaw('LOWER(trade_your_car.make) LIKE ?', ["%$make%"]);
+            $query->whereRaw('LOWER(make) LIKE ?', ["%$make%"]);
         }
+
         //Check for Car Model
         if ($req->model) {
             $model = strtolower($req->model);
-            $query->whereRaw('LOWER(trade_your_car.model) LIKE ?', ["%$model%"]);
+            $query->whereRaw('LOWER(model) LIKE ?', ["%$model%"]);
         }
 
         if ($req->state) {
-            $query->where('trade_your_car.state', $req->state);
+            $query->where('state', $req->state);
         }
 
         if ($req->proximity == "1" && $authUser->zip_code) {
@@ -522,36 +551,43 @@ class Trade_Your_CarController extends Controller
 
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
+        $total = $query->count();
+        $auctions = $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->select('trade_your_car.*')->get();
 
         return array(
             'start' => $start,
             'limit' => $limit,
-            'total' => $query->count(),
-            'auctions' => $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->select('trade_your_car.*')->get()
+            'total' => $total,
+            'auctions' => $auctions
         );
     }
 
     public function list_dealer_top(Request $req)
     {
         $dealerId = auth()->user()->id;
-        $query = trade_your_car::with('get_images')
-            ->with(['auction_bids' => function ($q) {
+        $query = trade_your_car::with([
+            'get_images',
+            'auction_bids' => function ($q) {
                 $q->orderBy('bid_price', 'DESC');
-            }])
-            ->where('trade_your_car.publish_status', 'publish')
-            ->whereHas('auction_bid_with_max_price', function($q) use ($dealerId) {
+            },
+            'auction_bids.owner:id,name,email,location,state,city,address,dp,phone,zip_code',
+            'auction_bids.get_images'
+        ])
+            ->where('publish_status', 'publish')
+            ->whereHas('top_auction_bid', function($q) use ($dealerId) {
                 $q->where('dealer_user_id', $dealerId);
-            })
-            ->orderBy('trade_your_car.id', 'DESC');
+            });
 
         $start = $req->start ? intval($req->start) : 0;
         $limit = $req->limit ? intval($req->limit) : config('constants.pagination.items_per_page');
+        $total = $query->count();
+        $auctions = $query->orderBy('trade_your_car.id', 'DESC')->skip($start)->take($limit)->get();
 
         return array(
             'start' => $start,
             'limit' => $limit,
-            'total' => $query->count(),
-            'auctions' => $query->skip($start)->take($limit)->get()
+            'total' => $total,
+            'auctions' => $auctions
         );
     }
 
@@ -772,7 +808,7 @@ class Trade_Your_CarController extends Controller
         if ($user->user_type == 'Car Owner') {
             return messaging::join('users', 'users.id', '=', 'messaging.dealer_id')
                 ->where('owner_id', '=', $user->id)
-                ->where('approved_status', '=', 1)
+                ->where('messaging.approved_status', '=', 1)
                 ->groupBy('item_id')
                 ->orderBy('messaging.id', 'desc')
                 ->select('messaging.*', 'users.dp', 'users.name')
@@ -780,7 +816,7 @@ class Trade_Your_CarController extends Controller
         } elseif ($user->user_type == 'Car Dealer') {
             return messaging::join('users', 'users.id', '=', 'messaging.owner_id')
                 ->where('dealer_id', '=', $user->id)
-                ->where('approved_status', '=', 1)
+                ->where('messaging.approved_status', '=', 1)
                 ->groupBy('item_id')
                 ->orderBy('messaging.id', 'DESC')
                 ->select('messaging.*', 'users.dp', 'users.name')

@@ -15,6 +15,6 @@ class sell_your_car extends Model
     public $timestamps = false;
 
     function get_images(){
-        return $this->hasMany('App\Models\sell_car_images', 'sell_car_id', 'id');
+        return $this->hasMany(sell_car_images::class, 'sell_car_id', 'id');
     }
 }
