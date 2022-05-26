@@ -48,7 +48,6 @@ Route::group([
     Route::get('/sell_your_car_list', [Trade_Your_CarController::class, 'listSell']);
     Route::get('/list_auction_owner', [Trade_Your_CarController::class, 'list_owner']);
     Route::get('/list_auction_dealer', [Trade_Your_CarController::class, 'list_dealer']);
-    Route::get('/list_auction_dealer_top', [Trade_Your_CarController::class, 'list_dealer_top']);
     Route::get('/get_active_states', [Trade_Your_CarController::class, 'get_active_states']);
     //Route::get('/sell_your_car_list', [Trade_Your_CarController::class, 'listSell'])->middleware('auth');
     Route::get('/get_all', [Trade_Your_CarController::class, 'GetAll']);
@@ -63,6 +62,7 @@ Route::group([
         'middleware' => 'dealer'
     ], function () {
         Route::post('/addbid', [Trade_Your_CarController::class, 'addBid']);
+        Route::get('/list_auction_dealer_top', [Trade_Your_CarController::class, 'list_dealer_top']);
     });
 
     Route::post('/car_list', [Trade_Your_CarController::class, 'listAll']);
